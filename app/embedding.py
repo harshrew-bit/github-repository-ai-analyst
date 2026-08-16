@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from retry import retry_request
 
 
 load_dotenv()
@@ -54,14 +55,16 @@ class EmbeddingModel:
             "requests": requests_data
         }
 
-        response = requests.post(
-            self.url,
-            headers=headers,
-            json=payload,
-            timeout=120
+        response = retry_request(
+            lambda: requests.post(
+                self.url,
+                headers=headers,
+                json=payload,
+                timeout=120
+            )
         )
 
-        response.raise_for_status()
+        
 
         data = response.json()
 

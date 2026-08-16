@@ -1,6 +1,5 @@
 import json
 import os
-import time
 
 from embedding import EmbeddingModel
 from vector_store import ChromaVectorStore
@@ -198,51 +197,11 @@ def create_embedding_index(
             for chunk in batch
         ]
 
-        max_retries = 5
-
-        for attempt in range(max_retries):
-
-            try:
-
-                embeddings = (
-                    embedding_model.embed_texts(
-                        texts
-                    )
-                )
-
-                break
-
-            except Exception as e:
-
-                if "429" not in str(e):
-                    raise
-
-                wait_time = 30 * (attempt + 1)
-
-                print(
-                    "Rate limit reached."
-                )
-
-                print(
-                    f"Waiting "
-                    f"{wait_time} seconds..."
-                )
-
-                time.sleep(wait_time)
-
-        else:
-
-            print(
-                "\nEmbedding stopped because "
-                "the API rate limit persisted."
+        embeddings = (
+            embedding_model.embed_texts(
+                texts
             )
-
-            print(
-                f"Successfully saved: "
-                f"{len(all_embeddings)} chunks"
-            )
-
-            return
+        )
 
         all_embeddings.extend(
             embeddings

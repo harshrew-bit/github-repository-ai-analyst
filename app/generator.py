@@ -1,8 +1,7 @@
 import os
-from click import prompt
 from dotenv import load_dotenv
 from google import genai
-
+from retry import retry_request
 load_dotenv()
 
 
@@ -40,9 +39,11 @@ Repository Context:
 
     try:
 
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
+        response = retry_request(
+            lambda: client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=prompt
+            )
         )
 
         return response.text
