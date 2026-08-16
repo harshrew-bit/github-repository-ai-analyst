@@ -3,7 +3,11 @@ import chromadb
 
 class ChromaVectorStore:
 
-    def __init__(self, persist_directory):
+    def __init__(
+        self,
+        persist_directory,
+        collection_name="repository_chunks"
+    ):
 
         self.client = chromadb.PersistentClient(
             path=persist_directory
@@ -11,7 +15,10 @@ class ChromaVectorStore:
 
         self.collection = (
             self.client.get_or_create_collection(
-                name="repository_chunks"
+                name=collection_name,
+                metadata={
+                    "hnsw:space": "cosine"
+                }
             )
         )
 

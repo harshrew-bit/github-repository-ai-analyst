@@ -13,7 +13,8 @@ class Retriever:
         self.embedding_model = embedding_model
 
         self.store = ChromaVectorStore(
-            persist_directory=chroma_directory
+            persist_directory=chroma_directory,
+            collection_name="repository_chunks_cosine"
         )
 
         print(
@@ -34,26 +35,55 @@ class Retriever:
             )
         )
 
-        # Search Chroma
-        results = self.store.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
+        # Retrieve more candidates than we finally need.
+        candidate_count = max(
+            top_k * 3,
+            15
         )
 
-        retrieved_results = []
+        results = self.store.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=candidate_count
+        )
 
-        for i in range(top_k):
+        candidates = []
+
+        for i in range(
+            len(results["documents"][0])
+        ):
 
             metadata = (
                 results["metadatas"][0][i]
             )
 
-            retrieved_results.append({
-                "score": 1 - results["distances"][0][i],
+            distance = (
+                results["distances"][0][i]
+            )
+
+            candidates.append({
+                "score": 1 - distance,
                 "file_path": metadata["file_path"],
                 "language": metadata["language"],
                 "chunk_id": metadata["chunk_id"],
                 "content": results["documents"][0][i]
             })
 
-        return retrieved_results
+        # Prefer results from different files.
+        selected_results = []
+        seen_files = set()
+
+        for result in candidates:
+
+            if result["file_path"] in seen_files:
+                continue
+
+            selected_results.append(result)
+
+            seen_files.add(
+                result["file_path"]
+            )
+
+            if len(selected_results) == top_k:
+                break
+
+        return selected_results
