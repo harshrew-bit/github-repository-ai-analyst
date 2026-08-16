@@ -49,7 +49,7 @@ class ChromaVectorStore:
                 "chunk_id": item["chunk_id"]
             })
 
-        self.collection.add(
+        self.collection.upsert(
             ids=ids,
             embeddings=embeddings,
             documents=documents,

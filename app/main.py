@@ -1,5 +1,12 @@
 import re
-from urllib.parse import urlparse
+from ingestion import (
+    parse_github_url,
+    load_repository,
+    create_chunks
+)
+
+from indexer import create_embedding_index
+from vector_store import ChromaVectorStore
 
 from rag import RAGPipeline
 
@@ -15,27 +22,12 @@ repository_url = input(
 ).strip()
 
 
-# Parse the repository name from the URL.
-parsed_url = urlparse(
+# using the existing ingestion logic.
+owner, repository_name = parse_github_url(
     repository_url
 )
 
-repository_name = (
-    parsed_url.path
-    .strip("/")
-    .split("/")[-1]
-)
 
-
-# Remove .git if the user provides a Git URL.
-if repository_name.endswith(".git"):
-
-    repository_name = (
-        repository_name[:-4]
-    )
-
-
-# Create a repository-specific Chroma collection name.
 # Create a repository-specific Chroma collection name.
 def create_collection_name(repository_name):
 
@@ -53,18 +45,96 @@ def create_collection_name(repository_name):
     return (
         f"repository_{sanitized_name}"
     )
+def create_embedding_file_path(
+    owner,
+    repository_name
+):
 
+    repository_id = (
+        f"{owner}_{repository_name}"
+        .lower()
+    )
+
+    repository_id = re.sub(
+        r"[^a-z0-9_-]",
+        "_",
+        repository_id
+    )
+
+    return (
+        f"data/repositories/"
+        f"{repository_id}_embeddings.json"
+    )
 
 collection_name = create_collection_name(
     repository_name
 )
 
+embedding_file = create_embedding_file_path(
+    owner,
+    repository_name
+)
+
+print(
+    f"Using embedding checkpoint: "
+    f"{embedding_file}"
+)
 
 print(
     f"\nUsing Chroma collection: "
     f"{collection_name}"
 )
 
+
+store = ChromaVectorStore(
+    persist_directory=chroma_directory,
+    collection_name=collection_name
+)
+
+
+if store.count() == 0:
+
+    print(
+        "\nRepository not indexed."
+    )
+
+    print(
+        "Indexing repository..."
+    )
+
+    documents = load_repository(
+        repository_url
+    )
+
+    chunks = create_chunks(
+        documents
+    )
+
+    print(
+        f"\nDocuments: {len(documents)}"
+    )
+
+    print(
+        f"Total chunks: {len(chunks)}"
+    )
+
+    create_embedding_index(
+        chunks=chunks,
+        repository=f"{owner}/{repository_name}",
+        output_file=embedding_file,
+        collection_name=collection_name,
+        chroma_directory=chroma_directory
+    )
+
+else:
+
+    print(
+        "\nRepository already indexed."
+    )
+
+    print(
+        f"Chroma embeddings: {store.count()}"
+    )
 
 rag = RAGPipeline(
     chroma_directory=chroma_directory,

@@ -3,6 +3,7 @@ import os
 import time
 
 from embedding import EmbeddingModel
+from vector_store import ChromaVectorStore
 
 
 def save_checkpoint(
@@ -40,11 +41,48 @@ def save_checkpoint(
             ensure_ascii=False
         )
 
+def store_embeddings_in_chroma(
+    chunks,
+    embeddings,
+    chroma_directory,
+    collection_name
+):
+
+    store = ChromaVectorStore(
+        persist_directory=chroma_directory,
+        collection_name=collection_name
+    )
+
+    items = []
+
+    for chunk, embedding in zip(
+        chunks,
+        embeddings
+    ):
+
+        items.append({
+            "file_path": chunk.file_path,
+            "language": chunk.language,
+            "chunk_id": chunk.chunk_id,
+            "content": chunk.content,
+            "embedding": embedding
+        })
+
+    store.add_embeddings(items)
+
+    print(
+        f"Stored {store.count()} embeddings "
+        f"in Chroma collection "
+        f"'{collection_name}'."
+    )
+
 
 def create_embedding_index(
     chunks,
     repository,
     output_file,
+    collection_name,
+    chroma_directory="data/chroma",
     batch_size=10
 ):
 
@@ -184,3 +222,10 @@ def create_embedding_index(
         len(all_embeddings)
     )
     print("Output:", output_file)
+
+    store_embeddings_in_chroma(
+    chunks=chunks,
+    embeddings=all_embeddings,
+    chroma_directory=chroma_directory,
+    collection_name=collection_name
+)
