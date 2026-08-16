@@ -1,21 +1,18 @@
-import os
 from dotenv import load_dotenv
-from google import genai
-from retry import retry_request
+
+from gemini_client import GeminiClient
+
+
 load_dotenv()
 
 
 def generate_answer(question, context):
     """
-    Generate an answer using Gemini based only on the provided repository context.
+    Generate an answer using Gemini based only
+    on the provided repository context.
     """
 
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in .env")
-
-    client = genai.Client(api_key=api_key)
+    gemini_client = GeminiClient()
 
     prompt = f"""
 You are an AI assistant that analyzes GitHub repositories.
@@ -39,11 +36,9 @@ Repository Context:
 
     try:
 
-        response = retry_request(
-            lambda: client.models.generate_content(
-                model="gemini-3.5-flash",
-                contents=prompt
-            )
+        response = gemini_client.generate_content(
+            model="gemini-3.5-flash",
+            contents=prompt
         )
 
         return response.text
