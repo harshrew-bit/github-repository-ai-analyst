@@ -1,3 +1,4 @@
+import os
 import re
 from ingestion import (
     parse_github_url,
@@ -5,7 +6,10 @@ from ingestion import (
     create_chunks
 )
 
-from indexer import create_embedding_index
+from indexer import (
+    create_embedding_index,
+    restore_chroma_from_checkpoint
+)
 from vector_store import ChromaVectorStore
 
 from rag import RAGPipeline
@@ -95,36 +99,58 @@ store = ChromaVectorStore(
 if store.count() == 0:
 
     print(
-        "\nRepository not indexed."
+        "\nChroma collection is empty."
     )
 
-    print(
-        "Indexing repository..."
-    )
+    if os.path.exists(embedding_file):
 
-    documents = load_repository(
-        repository_url
-    )
+        print(
+            "Embedding checkpoint found."
+        )
 
-    chunks = create_chunks(
-        documents
-    )
+        print(
+            "Restoring Chroma from checkpoint..."
+        )
 
-    print(
-        f"\nDocuments: {len(documents)}"
-    )
+        restore_chroma_from_checkpoint(
+            input_file=embedding_file,
+            chroma_directory=chroma_directory,
+            collection_name=collection_name
+        )
 
-    print(
-        f"Total chunks: {len(chunks)}"
-    )
+    else:
 
-    create_embedding_index(
-        chunks=chunks,
-        repository=f"{owner}/{repository_name}",
-        output_file=embedding_file,
-        collection_name=collection_name,
-        chroma_directory=chroma_directory
-    )
+        print(
+            "No embedding checkpoint found."
+        )
+
+        print(
+            "Indexing repository..."
+        )
+
+        documents = load_repository(
+            repository_url
+        )
+
+        chunks = create_chunks(
+            documents
+        )
+
+        print(
+            f"\nDocuments: {len(documents)}"
+        )
+
+        print(
+            f"Total chunks: {len(chunks)}"
+        )
+
+        create_embedding_index(
+            chunks=chunks,
+            repository=f"{owner}/{repository_name}",
+            output_file=embedding_file,
+            collection_name=collection_name,
+            chroma_directory=chroma_directory
+        )
 
 else:
 

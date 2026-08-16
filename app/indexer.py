@@ -4,6 +4,7 @@ import time
 
 from embedding import EmbeddingModel
 from vector_store import ChromaVectorStore
+from embedding_store import load_embeddings
 
 
 def save_checkpoint(
@@ -76,6 +77,55 @@ def store_embeddings_in_chroma(
         f"'{collection_name}'."
     )
 
+def restore_chroma_from_checkpoint(
+    input_file,
+    chroma_directory,
+    collection_name
+):
+
+    data = load_embeddings(
+        input_file
+    )
+
+    if data is None:
+        return False
+
+    embeddings_data = data.get(
+        "embeddings",
+        []
+    )
+
+    if not embeddings_data:
+        return False
+
+    store = ChromaVectorStore(
+        persist_directory=chroma_directory,
+        collection_name=collection_name
+    )
+
+    items = []
+
+    for item in embeddings_data:
+
+        items.append({
+            "file_path": item["file_path"],
+            "language": item["language"],
+            "chunk_id": item["chunk_id"],
+            "content": item["content"],
+            "embedding": item["embedding"]
+        })
+
+    store.add_embeddings(
+        items
+    )
+
+    print(
+        f"Restored {store.count()} embeddings "
+        f"from checkpoint into "
+        f"'{collection_name}'."
+    )
+
+    return True
 
 def create_embedding_index(
     chunks,
