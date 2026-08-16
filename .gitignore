@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated data
+data/repositories/*_embeddings.json
+data/repositories/*_test_embeddings.json
+
+# macOS
+.DS_Store
+
+# Generated repository data
+data/repositories/*.json
