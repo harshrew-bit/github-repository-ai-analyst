@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from rag import RAGPipeline
 
 
@@ -6,14 +8,41 @@ chroma_directory = (
 )
 
 
-# Repository name for this test.
-# We will make this dynamic from the GitHub URL later.
-repository_name = "requests"
+# Ask the user for the GitHub repository URL.
+repository_url = input(
+    "\nEnter GitHub repository URL: "
+).strip()
+
+
+# Parse the repository name from the URL.
+parsed_url = urlparse(
+    repository_url
+)
+
+repository_name = (
+    parsed_url.path
+    .strip("/")
+    .split("/")[-1]
+)
+
+
+# Remove .git if the user provides a Git URL.
+if repository_name.endswith(".git"):
+
+    repository_name = (
+        repository_name[:-4]
+    )
 
 
 # Create a repository-specific Chroma collection name.
 collection_name = (
     f"repository_{repository_name}"
+)
+
+
+print(
+    f"\nUsing Chroma collection: "
+    f"{collection_name}"
 )
 
 
@@ -24,7 +53,8 @@ rag = RAGPipeline(
 
 
 question = input(
-    "\nAsk a question about Requests: "
+    "\nAsk a question about "
+    f"{repository_name}: "
 )
 
 
