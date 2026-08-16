@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlparse
 
 from rag import RAGPipeline
@@ -35,8 +36,27 @@ if repository_name.endswith(".git"):
 
 
 # Create a repository-specific Chroma collection name.
-collection_name = (
-    f"repository_{repository_name}"
+# Create a repository-specific Chroma collection name.
+def create_collection_name(repository_name):
+
+    sanitized_name = (
+        repository_name
+        .lower()
+    )
+
+    sanitized_name = re.sub(
+        r"[^a-z0-9_-]",
+        "_",
+        sanitized_name
+    )
+
+    return (
+        f"repository_{sanitized_name}"
+    )
+
+
+collection_name = create_collection_name(
+    repository_name
 )
 
 
