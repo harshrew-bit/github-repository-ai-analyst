@@ -5,7 +5,11 @@ from generator import generate_answer
 
 class RAGPipeline:
 
-    def __init__(self, chroma_directory):
+    def __init__(
+        self,
+        chroma_directory,
+        collection_name
+    ):
 
         # Create the embedding model.
         # This is used only for embedding the user's question.
@@ -15,7 +19,8 @@ class RAGPipeline:
         # Chroma stores and searches the repository embeddings.
         self.retriever = Retriever(
             embedding_model=self.embedding_model,
-            chroma_directory=chroma_directory
+            chroma_directory=chroma_directory,
+            collection_name=collection_name
         )
 
     def ask(self, question, top_k=5):

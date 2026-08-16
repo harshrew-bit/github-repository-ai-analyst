@@ -7,14 +7,15 @@ class Retriever:
     def __init__(
         self,
         embedding_model,
-        chroma_directory
+        chroma_directory,
+        collection_name
     ):
 
         self.embedding_model = embedding_model
 
         self.store = ChromaVectorStore(
             persist_directory=chroma_directory,
-            collection_name="repository_chunks_cosine"
+            collection_name=collection_name
         )
 
         print(

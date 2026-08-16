@@ -6,7 +6,7 @@ class ChromaVectorStore:
     def __init__(
         self,
         persist_directory,
-        collection_name="repository_chunks"
+        collection_name
     ):
 
         self.client = chromadb.PersistentClient(

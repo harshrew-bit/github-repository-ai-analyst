@@ -6,8 +6,20 @@ chroma_directory = (
 )
 
 
+# Repository name for this test.
+# We will make this dynamic from the GitHub URL later.
+repository_name = "requests"
+
+
+# Create a repository-specific Chroma collection name.
+collection_name = (
+    f"repository_{repository_name}"
+)
+
+
 rag = RAGPipeline(
-    chroma_directory=chroma_directory
+    chroma_directory=chroma_directory,
+    collection_name=collection_name
 )
 
 
