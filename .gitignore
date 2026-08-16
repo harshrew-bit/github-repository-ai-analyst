@@ -19,3 +19,6 @@ data/repositories/*_test_embeddings.json
 
 # Generated repository data
 data/repositories/*.json
+
+# Chroma vector database
+data/chroma/

@@ -1,14 +1,13 @@
 from rag import RAGPipeline
 
 
-embedding_file = (
-    "data/repositories/"
-    "requests_embeddings.json"
+chroma_directory = (
+    "data/chroma"
 )
 
 
 rag = RAGPipeline(
-    embedding_file=embedding_file
+    chroma_directory=chroma_directory
 )
 
 
