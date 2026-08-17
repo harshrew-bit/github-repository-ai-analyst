@@ -6,6 +6,7 @@ class RepositoryDocument(BaseModel):
     file_path: str
     language: str
     content: str
+    blob_sha: str
 
 class CodeChunk(BaseModel):
     repository: str
@@ -13,6 +14,7 @@ class CodeChunk(BaseModel):
     language: str
     chunk_id: int
     content: str
+    blob_sha: str
 
     
 def detect_language(file_path):

@@ -94,8 +94,52 @@ def should_include_file(path):
 
     return False
 
+def get_repository_file_map(github_url):
 
-def load_repository(github_url):
+    owner, repo = parse_github_url(
+        github_url
+    )
+
+    client = GitHubClient()
+
+    repository_data = client.get_repository(
+        owner,
+        repo
+    )
+
+    branch = repository_data[
+        "default_branch"
+    ]
+
+    tree_data = client.get_repository_tree(
+        owner,
+        repo,
+        branch
+    )
+
+    file_map = {}
+
+    for item in tree_data.get(
+        "tree",
+        []
+    ):
+
+        if item.get("type") != "blob":
+            continue
+
+        path = item["path"]
+
+        if not should_include_file(path):
+            continue
+
+        file_map[path] = item["sha"]
+
+    return file_map
+
+def load_repository(
+    github_url,
+    paths=None
+):
 
     owner, repo = parse_github_url(
         github_url
@@ -149,7 +193,10 @@ def load_repository(github_url):
 
         if not should_include_file(path):
             continue
-        
+
+        if paths is not None and path not in paths:
+            continue
+
         included_files += 1
 
         print(
@@ -178,7 +225,8 @@ def load_repository(github_url):
                 repository=repository_name,
                 file_path=path,
                 language=detect_language(path),
-                content=content
+                content=content,
+                blob_sha=item["sha"]
             )
         )
     print(
@@ -207,7 +255,8 @@ def create_chunks(documents):
                     file_path=document.file_path,
                     language=document.language,
                     chunk_id=chunk_id,
-                    content=content
+                    content=content,
+                    blob_sha=document.blob_sha
                 )
             )
 

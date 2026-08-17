@@ -9,6 +9,7 @@ from embedding_store import load_embeddings
 def save_checkpoint(
     repository,
     commit_sha,
+    file_map,
     chunks,
     embeddings,
     output_file
@@ -17,6 +18,7 @@ def save_checkpoint(
     data = {
         "repository": repository,
         "commit_sha": commit_sha,
+        "file_map": file_map,
         "embeddings": []
     }
 
@@ -27,6 +29,7 @@ def save_checkpoint(
             "language": chunk.language,
             "chunk_id": chunk.chunk_id,
             "content": chunk.content,
+            "blob_sha": chunk.blob_sha,
             "embedding": embedding
         })
 
@@ -67,6 +70,7 @@ def store_embeddings_in_chroma(
             "language": chunk.language,
             "chunk_id": chunk.chunk_id,
             "content": chunk.content,
+            "blob_sha": chunk.blob_sha,
             "embedding": embedding
         })
 
@@ -113,6 +117,7 @@ def restore_chroma_from_checkpoint(
             "language": item["language"],
             "chunk_id": item["chunk_id"],
             "content": item["content"],
+            "blob_sha": item.get("blob_sha", ""),
             "embedding": item["embedding"]
         })
 
@@ -153,10 +158,274 @@ def checkpoint_matches_commit(
 
     return checkpoint_sha == commit_sha
 
+def load_checkpoint_file_map(
+    output_file
+):
+
+    if not os.path.exists(output_file):
+        return {}
+
+    with open(
+        output_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        data = json.load(file)
+
+    return data.get(
+        "file_map",
+        {}
+    )
+
+def compare_file_maps(
+    old_file_map,
+    new_file_map
+):
+
+    old_files = set(
+        old_file_map.keys()
+    )
+
+    new_files = set(
+        new_file_map.keys()
+    )
+
+    unchanged = []
+    changed = []
+    added = []
+    deleted = []
+
+    for path in old_files & new_files:
+
+        if old_file_map[path] == new_file_map[path]:
+            unchanged.append(path)
+
+        else:
+            changed.append(path)
+
+    for path in new_files - old_files:
+        added.append(path)
+
+    for path in old_files - new_files:
+        deleted.append(path)
+
+    return {
+        "unchanged": sorted(unchanged),
+        "changed": sorted(changed),
+        "added": sorted(added),
+        "deleted": sorted(deleted)
+    }
+
+def get_files_to_reindex(
+    file_changes
+):
+
+    return set(
+        file_changes["changed"]
+        + file_changes["added"]
+    )
+
+def update_checkpoint_incrementally(
+    output_file,
+    repository,
+    commit_sha,
+    file_map,
+    changed_files,
+    deleted_files,
+    new_chunks,
+    new_embeddings
+):
+
+    with open(
+        output_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        data = json.load(file)
+
+    old_embeddings = data.get(
+        "embeddings",
+        []
+    )
+
+    affected_files = set(
+        changed_files + deleted_files
+    )
+
+    updated_embeddings = []
+
+    for item in old_embeddings:
+
+        if item["file_path"] in affected_files:
+            continue
+
+        updated_embeddings.append(
+            item
+        )
+
+    for chunk, embedding in zip(
+        new_chunks,
+        new_embeddings
+    ):
+
+        updated_embeddings.append({
+            "file_path": chunk.file_path,
+            "language": chunk.language,
+            "chunk_id": chunk.chunk_id,
+            "content": chunk.content,
+            "blob_sha": chunk.blob_sha,
+            "embedding": embedding
+        })
+
+    data["repository"] = repository
+    data["commit_sha"] = commit_sha
+    data["file_map"] = file_map
+    data["embeddings"] = updated_embeddings
+
+    with open(
+        output_file,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            data,
+            file,
+            indent=2,
+            ensure_ascii=False
+        )
+
+    print(
+        f"Checkpoint updated: "
+        f"{len(updated_embeddings)} embeddings."
+    )
+
+def incremental_update(
+    repository_url,
+    repository,
+    changed_files,
+    deleted_files,
+    commit_sha,
+    file_map,
+    output_file,
+    collection_name,
+    chroma_directory="data/chroma"
+):
+
+    from ingestion import (
+        load_repository,
+        create_chunks
+    )
+
+    store = ChromaVectorStore(
+        persist_directory=chroma_directory,
+        collection_name=collection_name
+    )
+
+
+    documents = load_repository(
+        repository_url,
+        paths=set(changed_files)
+    )
+
+    chunks = create_chunks(
+        documents
+    )
+
+    if not chunks:
+
+        print(
+            "No new chunks to embed."
+        )
+
+        if not changed_files and deleted_files:
+
+            deleted_count = store.delete_files(
+                set(deleted_files)
+            )
+
+            print(
+                f"Deleted {deleted_count} old chunks."
+            )
+
+            update_checkpoint_incrementally(
+                output_file=output_file,
+                repository=repository,
+                commit_sha=commit_sha,
+                file_map=file_map,
+                changed_files=[],
+                deleted_files=deleted_files,
+                new_chunks=[],
+                new_embeddings=[]
+            )
+
+        return
+
+    embedding_model = EmbeddingModel()
+
+    texts = [
+        chunk.content
+        for chunk in chunks
+    ]
+
+    embeddings = embedding_model.embed_texts(
+        texts
+    )
+
+    files_to_delete = set(
+        changed_files + deleted_files
+    )
+
+    deleted_count = store.delete_files(
+        files_to_delete
+    )
+
+    print(
+        f"Deleted {deleted_count} old chunks."
+    )
+
+    items = []
+
+    for chunk, embedding in zip(
+        chunks,
+        embeddings
+    ):
+
+        items.append({
+            "file_path": chunk.file_path,
+            "language": chunk.language,
+            "chunk_id": chunk.chunk_id,
+            "content": chunk.content,
+            "blob_sha": chunk.blob_sha,
+            "embedding": embedding
+        })
+
+    store.add_embeddings(
+        items
+    )
+
+    print(
+        f"Added {len(items)} new chunks."
+    )
+
+    update_checkpoint_incrementally(
+        output_file=output_file,
+        repository=repository,
+        commit_sha=commit_sha,
+        file_map=file_map,
+        changed_files=changed_files,
+        deleted_files=deleted_files,
+        new_chunks=chunks,
+        new_embeddings=embeddings
+    )
+
 def create_embedding_index(
     chunks,
     repository,
     commit_sha,
+    file_map,
     output_file,
     collection_name,
     chroma_directory="data/chroma",
@@ -266,6 +535,7 @@ def create_embedding_index(
         save_checkpoint(
             repository=repository,
             commit_sha=commit_sha,
+            file_map=file_map,
             chunks=chunks[:len(all_embeddings)],
             embeddings=all_embeddings,
             output_file=output_file

@@ -46,7 +46,8 @@ class ChromaVectorStore:
             metadatas.append({
                 "file_path": item["file_path"],
                 "language": item["language"],
-                "chunk_id": item["chunk_id"]
+                "chunk_id": item["chunk_id"],
+                "blob_sha": item.get("blob_sha", "")
             })
 
         self.collection.upsert(
@@ -59,6 +60,33 @@ class ChromaVectorStore:
     def count(self):
 
         return self.collection.count()
+
+    def delete_files(
+        self,
+        file_paths
+    ):
+
+        ids = []
+
+        for file_path in file_paths:
+
+            results = self.collection.get(
+                where={
+                    "file_path": file_path
+                },
+                include=[]
+            )
+
+            ids.extend(
+                results["ids"]
+            )
+
+        if ids:
+            self.collection.delete(
+                ids=ids
+            )
+
+        return len(ids)
 
     def delete_collection(self):
 

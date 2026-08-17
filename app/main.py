@@ -3,12 +3,18 @@ import re
 from ingestion import (
     parse_github_url,
     load_repository,
-    create_chunks
+    create_chunks,
+    get_repository_file_map
 )
 
 from indexer import (
     create_embedding_index,
-    restore_chroma_from_checkpoint
+    restore_chroma_from_checkpoint,
+    load_checkpoint_file_map,
+    compare_file_maps,
+    get_files_to_reindex,
+    incremental_update,
+    update_checkpoint_incrementally
 )
 from vector_store import ChromaVectorStore
 
@@ -198,6 +204,11 @@ if store.count() == 0:
                 documents
             )
 
+            file_map = {
+                document.file_path: document.blob_sha
+                for document in documents
+            }
+
             print(
                 f"\nDocuments: {len(documents)}"
             )
@@ -210,6 +221,7 @@ if store.count() == 0:
                 chunks=chunks,
                 repository=f"{owner}/{repository_name}",
                 commit_sha=current_commit_sha,
+                file_map=file_map,
                 output_file=embedding_file,
                 collection_name=collection_name,
                 chroma_directory=chroma_directory
@@ -233,6 +245,11 @@ if store.count() == 0:
             documents
         )
 
+        file_map = {
+            document.file_path: document.blob_sha
+            for document in documents
+        }
+
         print(
             f"\nDocuments: {len(documents)}"
         )
@@ -245,6 +262,7 @@ if store.count() == 0:
             chunks=chunks,
             repository=f"{owner}/{repository_name}",
             commit_sha=current_commit_sha,
+            file_map=file_map,
             output_file=embedding_file,
             collection_name=collection_name,
             chroma_directory=chroma_directory
@@ -276,40 +294,85 @@ else:
             "indexed commit."
         )
 
-        print(
-            "Removing old Chroma collection..."
+        old_file_map = load_checkpoint_file_map(
+            embedding_file
         )
 
-        store.delete_collection()
-
-        print(
-            "Indexing updated repository..."
-        )
-
-        documents = load_repository(
+        current_file_map = get_repository_file_map(
             repository_url
         )
 
-        chunks = create_chunks(
-            documents
+        file_changes = compare_file_maps(
+            old_file_map,
+            current_file_map
+        )
+
+        files_to_reindex = get_files_to_reindex(
+            file_changes
         )
 
         print(
-            f"\nDocuments: {len(documents)}"
+            "\nFile changes:"
         )
 
         print(
-            f"Total chunks: {len(chunks)}"
+            f"Unchanged: "
+            f"{len(file_changes['unchanged'])}"
         )
 
-        create_embedding_index(
-            chunks=chunks,
-            repository=f"{owner}/{repository_name}",
-            commit_sha=current_commit_sha,
-            output_file=embedding_file,
-            collection_name=collection_name,
-            chroma_directory=chroma_directory
+        print(
+            f"Changed: "
+            f"{len(file_changes['changed'])}"
         )
+
+        print(
+            f"Added: "
+            f"{len(file_changes['added'])}"
+        )
+
+        print(
+            f"Deleted: "
+            f"{len(file_changes['deleted'])}"
+        )
+
+        if not files_to_reindex and not file_changes["deleted"]:
+
+            print(
+                "\nNo indexed file changes detected."
+            )
+
+            print(
+                "Updating checkpoint metadata."
+            )
+
+            update_checkpoint_incrementally(
+                output_file=embedding_file,
+                repository=f"{owner}/{repository_name}",
+                commit_sha=current_commit_sha,
+                file_map=current_file_map,
+                changed_files=[],
+                deleted_files=[],
+                new_chunks=[],
+                new_embeddings=[]
+            )
+
+        else:
+
+            incremental_update(
+                repository_url=repository_url,
+                repository=f"{owner}/{repository_name}",
+                changed_files=sorted(
+                    files_to_reindex
+                ),
+                deleted_files=file_changes[
+                    "deleted"
+                ],
+                commit_sha=current_commit_sha,
+                file_map=current_file_map,
+                output_file=embedding_file,
+                collection_name=collection_name,
+                chroma_directory=chroma_directory
+            )
 
 rag = RAGPipeline(
     chroma_directory=chroma_directory,
