@@ -1,6 +1,6 @@
 import json
 import os
-
+import time
 from embedding import EmbeddingModel
 from vector_store import ChromaVectorStore
 from embedding_store import load_embeddings
@@ -8,6 +8,7 @@ from embedding_store import load_embeddings
 
 def save_checkpoint(
     repository,
+    commit_sha,
     chunks,
     embeddings,
     output_file
@@ -15,6 +16,7 @@ def save_checkpoint(
 
     data = {
         "repository": repository,
+        "commit_sha": commit_sha,
         "embeddings": []
     }
 
@@ -126,9 +128,35 @@ def restore_chroma_from_checkpoint(
 
     return True
 
+def checkpoint_matches_commit(
+    output_file,
+    commit_sha
+):
+
+    if not os.path.exists(output_file):
+        return False
+
+    with open(
+        output_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        data = json.load(file)
+
+    checkpoint_sha = data.get(
+        "commit_sha"
+    )
+
+    if not checkpoint_sha:
+        return False
+
+    return checkpoint_sha == commit_sha
+
 def create_embedding_index(
     chunks,
     repository,
+    commit_sha,
     output_file,
     collection_name,
     chroma_directory="data/chroma",
@@ -141,36 +169,63 @@ def create_embedding_index(
 
     start_index = 0
 
+
     # Resume from existing checkpoint
     if os.path.exists(output_file):
 
-        print("\nExisting embedding file found.")
-        print("Loading previous progress...")
-
-        with open(
+        if checkpoint_matches_commit(
             output_file,
-            "r",
-            encoding="utf-8"
-        ) as file:
+            commit_sha
+        ):
 
-            existing_data = json.load(file)
+            print(
+                "\nExisting embedding checkpoint "
+                "matches current commit."
+            )
 
-        existing_embeddings = existing_data.get(
-            "embeddings",
-            []
-        )
+            print(
+                "Loading previous progress..."
+            )
 
-        all_embeddings = [
-            item["embedding"]
-            for item in existing_embeddings
-        ]
+            with open(
+                output_file,
+                "r",
+                encoding="utf-8"
+            ) as file:
 
-        start_index = len(all_embeddings)
+                existing_data = json.load(file)
 
-        print(
-            f"Already embedded: "
-            f"{start_index}/{len(chunks)}"
-        )
+            existing_embeddings = (
+                existing_data.get(
+                    "embeddings",
+                    []
+                )
+            )
+
+            all_embeddings = [
+                item["embedding"]
+                for item in existing_embeddings
+            ]
+
+            start_index = len(
+                all_embeddings
+            )
+
+            print(
+                f"Already embedded: "
+                f"{start_index}/{len(chunks)}"
+            )
+
+        else:
+
+            print(
+                "\nExisting embedding checkpoint "
+                "does not match current commit."
+            )
+
+            print(
+                "Starting a fresh embedding index."
+            )
 
     total = len(chunks)
 
@@ -210,6 +265,7 @@ def create_embedding_index(
         # Save after EVERY successful batch
         save_checkpoint(
             repository=repository,
+            commit_sha=commit_sha,
             chunks=chunks[:len(all_embeddings)],
             embeddings=all_embeddings,
             output_file=output_file

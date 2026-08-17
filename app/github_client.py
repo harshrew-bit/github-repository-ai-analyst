@@ -31,6 +31,30 @@ class GitHubClient:
 
         return response.json()
 
+    def get_latest_commit_sha(
+        self,
+        owner,
+        repo,
+        branch
+    ):
+
+        url = (
+            f"{self.base_url}/repos/"
+            f"{owner}/{repo}/commits/{branch}"
+        )
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return data["sha"]
+
     def get_repository_tree(self, owner, repo, branch):
 
         url = f"{self.base_url}/repos/{owner}/{repo}/git/trees/{branch}"
