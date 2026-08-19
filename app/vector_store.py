@@ -1,4 +1,30 @@
+import os
+import re
 import chromadb
+
+
+def get_collection_name(owner: str, repo: str) -> str:
+    """
+    Generate a deterministic, Chroma-safe collection name for a GitHub repository.
+    Format: repository_<sanitized_owner>_<sanitized_repo>
+    Chroma naming rules:
+    - 3-63 characters length
+    - Alphanumeric characters, underscores, or hyphens
+    - Must start and end with an alphanumeric character
+    """
+    clean_owner = re.sub(r"[^a-zA-Z0-9_-]", "_", owner.strip()).strip("_").lower()
+    clean_repo = re.sub(r"[^a-zA-Z0-9_-]", "_", repo.strip()).strip("_").lower()
+
+    clean_owner = clean_owner or "owner"
+    clean_repo = clean_repo or "repo"
+
+    name = f"repository_{clean_owner}_{clean_repo}"
+
+    # Enforce maximum 63 characters
+    if len(name) > 63:
+        name = name[:63].rstrip("_-")
+
+    return name
 
 
 class ChromaVectorStore:
@@ -8,6 +34,9 @@ class ChromaVectorStore:
         persist_directory,
         collection_name
     ):
+
+        self.persist_directory = persist_directory
+        self.collection_name = collection_name
 
         self.client = chromadb.PersistentClient(
             path=persist_directory
