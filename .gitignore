@@ -22,3 +22,8 @@ data/repositories/*.json
 
 # Chroma vector database
 data/chroma/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
