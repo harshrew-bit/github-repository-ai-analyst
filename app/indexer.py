@@ -12,13 +12,15 @@ def save_checkpoint(
     file_map,
     chunks,
     embeddings,
-    output_file
+    output_file,
+    is_partial: bool = False
 ):
 
     data = {
         "repository": repository,
         "commit_sha": commit_sha,
         "file_map": file_map,
+        "is_partial": is_partial,
         "embeddings": []
     }
 

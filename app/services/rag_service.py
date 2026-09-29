@@ -14,10 +14,17 @@ from vector_store import (
 from rag import RAGPipeline
 
 
+from typing import Optional
+
+
 class RAGService:
 
-    def __init__(self, chroma_directory: str = "data/chroma"):
-        self.chroma_directory = chroma_directory
+    def __init__(self, chroma_directory: Optional[str] = None):
+        self.chroma_directory = (
+            chroma_directory
+            if chroma_directory is not None
+            else os.getenv("CHROMA_PERSIST_DIRECTORY", "data/chroma")
+        )
 
     def query(
         self,

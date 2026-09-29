@@ -42,3 +42,18 @@ export interface QueryResponse {
   answer: string;
   sources: SourceItem[];
 }
+
+export type PipelineStage =
+  | 'connecting'
+  | 'reading_tree'
+  | 'parsing_files'
+  | 'generating_embeddings'
+  | 'indexing_chroma'
+  | 'ready';
+
+export interface RepositoryExample {
+  name: string;
+  url: string;
+  description: string;
+  language: string;
+}

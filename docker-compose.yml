@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    image: github-ai-analyst-backend:latest
+    container_name: github-ai-analyst-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GEMINI_API_KEY_1=${GEMINI_API_KEY_1:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma
+    volumes:
+      # Persistent volume mount for ChromaDB and repository checkpoints
+      - chroma_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  chroma_data:
+    name: github_ai_analyst_chroma_data

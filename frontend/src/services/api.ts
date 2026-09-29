@@ -52,8 +52,7 @@ class ApiService {
       if (err instanceof Error) {
         if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
           throw new Error(
-            'Unable to connect to the backend. Please ensure the FastAPI server is running on ' +
-              this.baseUrl
+            'Unable to connect to the backend API service. Please verify the server is running and reachable.'
           );
         }
         throw err;

@@ -38,6 +38,8 @@ class ChromaVectorStore:
         self.persist_directory = persist_directory
         self.collection_name = collection_name
 
+        os.makedirs(persist_directory, exist_ok=True)
+
         self.client = chromadb.PersistentClient(
             path=persist_directory
         )

@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-from retry import retry_request
+from retry import retry_request, get_status_code
 
 
 load_dotenv()
@@ -15,24 +15,21 @@ class GeminiClient:
 
         self.api_keys = []
 
+        # Check standard GEMINI_API_KEY first
+        std_key = os.getenv("GEMINI_API_KEY")
+        if std_key and std_key.strip():
+            self.api_keys.append(std_key.strip())
+
         for index in range(1, 5):
-
-            api_key = os.getenv(
-                f"GEMINI_API_KEY_{index}"
-            )
-
-            if api_key:
-                self.api_keys.append(
-                    api_key
-                )
+            api_key = os.getenv(f"GEMINI_API_KEY_{index}")
+            if api_key and api_key.strip() and api_key.strip() not in self.api_keys:
+                self.api_keys.append(api_key.strip())
 
         if not self.api_keys:
-
             raise ValueError(
                 "No Gemini API keys found. "
-                "Add GEMINI_API_KEY_1, "
-                "GEMINI_API_KEY_2, etc. "
-                "to .env"
+                "Add GEMINI_API_KEY or GEMINI_API_KEY_1 "
+                "to environment variables or .env"
             )
 
         self.current_key_index = 0
@@ -75,13 +72,10 @@ class GeminiClient:
         model,
         contents
     ):
-
         while True:
-
             client = self.get_client()
 
             try:
-
                 return retry_request(
                     lambda: client.models.generate_content(
                         model=model,
@@ -89,8 +83,10 @@ class GeminiClient:
                     )
                 )
 
-            except Exception:
-
-                if not self.switch_key():
-
-                    raise
+            except Exception as error:
+                status_code = get_status_code(error)
+                # Only rotate credentials for auth/permission errors (401/403)
+                if status_code in (401, 403):
+                    if self.switch_key():
+                        continue
+                raise

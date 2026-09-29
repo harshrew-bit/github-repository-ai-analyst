@@ -61,6 +61,42 @@ def test_index_successful(client):
         assert data["chunks"] == 659
 
 
+def test_index_github_not_found(client):
+    from app.github_client import GitHubRepoNotFoundError
+    with patch("app.api.routes.repository_service.index_repository") as mock_index:
+        mock_index.side_effect = GitHubRepoNotFoundError("GitHub repository not found. Verify repository URL and visibility.")
+        response = client.post(
+            "/repositories/index",
+            json={"url": "https://github.com/nonexistent/nonexistent-repo"}
+        )
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+
+def test_index_github_auth_error(client):
+    from app.github_client import GitHubAuthError
+    with patch("app.api.routes.repository_service.index_repository") as mock_index:
+        mock_index.side_effect = GitHubAuthError("GitHub authentication failed. Invalid or expired token.")
+        response = client.post(
+            "/repositories/index",
+            json={"url": "https://github.com/private/repo"}
+        )
+        assert response.status_code == 401
+        assert "authentication failed" in response.json()["detail"].lower()
+
+
+def test_index_github_rate_limit(client):
+    from app.github_client import GitHubRateLimitError
+    with patch("app.api.routes.repository_service.index_repository") as mock_index:
+        mock_index.side_effect = GitHubRateLimitError("GitHub API rate limit exceeded.")
+        response = client.post(
+            "/repositories/index",
+            json={"url": "https://github.com/psf/requests"}
+        )
+        assert response.status_code == 429
+        assert "rate limit" in response.json()["detail"].lower()
+
+
 def test_query_empty_question(client):
     response = client.post(
         "/repositories/query",

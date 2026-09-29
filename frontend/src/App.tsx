@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
+import { Hero } from './components/Hero';
 import { RepositoryInput } from './components/RepositoryInput';
-import { RepositoryStatus } from './components/RepositoryStatus';
+import { AnalysisProgress } from './components/AnalysisProgress';
+import { RepositoryOverview } from './components/RepositoryOverview';
 import { SuggestedQuestions } from './components/SuggestedQuestions';
 import { QuestionInput } from './components/QuestionInput';
 import { AnswerPanel } from './components/AnswerPanel';
 import { SourcesPanel } from './components/SourcesPanel';
+import { Footer } from './components/Footer';
 import { api } from './services/api';
 import { IndexResponse, QueryResponse } from './types/api';
-import { Code2, Sparkles, Database, ShieldCheck } from 'lucide-react';
+import { Database, ShieldCheck, Cpu } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null);
@@ -23,7 +26,7 @@ export const App: React.FC = () => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [queryResult, setQueryResult] = useState<QueryResponse | null>(null);
 
-  // Check backend health on initial load
+  // Poll backend health check on mount and interval
   useEffect(() => {
     let isMounted = true;
     const checkBackend = async () => {
@@ -38,6 +41,7 @@ export const App: React.FC = () => {
         }
       }
     };
+
     checkBackend();
     const interval = setInterval(checkBackend, 15000);
     return () => {
@@ -46,28 +50,29 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Handle repository indexing
+  // Handle repository analysis & indexing
   const handleIndexRepository = async (url: string) => {
     setIsIndexing(true);
     setIndexError(null);
     setQueryResult(null);
+    setActiveRepoUrl(url);
 
     try {
       const response = await api.indexRepository(url);
       setIndexedRepo(response);
-      setActiveRepoUrl(url);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setIndexError(err.message);
       } else {
-        setIndexError('Failed to index repository.');
+        setIndexError('Failed to analyze repository.');
       }
+      setIndexedRepo(null);
     } finally {
       setIsIndexing(false);
     }
   };
 
-  // Handle asking question
+  // Handle asking questions
   const handleAskQuestion = async (question: string, topK: number) => {
     if (!activeRepoUrl) {
       setQueryError('Please analyze and index a repository first.');
@@ -79,18 +84,19 @@ export const App: React.FC = () => {
     setQueryError(null);
 
     try {
-      // Simulate sub-step indicator for UX
-      setTimeout(() => {
+      // Meaningful state progression for query UX
+      const stepTimer = setTimeout(() => {
         setLoadingStep('generating');
-      }, 700);
+      }, 600);
 
       const response = await api.queryRepository(activeRepoUrl, question, topK);
+      clearTimeout(stepTimer);
       setQueryResult(response);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setQueryError(err.message);
       } else {
-        setQueryError('Failed to query repository.');
+        setQueryError('Failed to query codebase context.');
       }
     } finally {
       setIsQuerying(false);
@@ -103,49 +109,99 @@ export const App: React.FC = () => {
     handleAskQuestion(questionText, 5);
   };
 
+  const handleResetRepo = () => {
+    setIndexedRepo(null);
+    setActiveRepoUrl('');
+    setQueryResult(null);
+    setQuestionValue('');
+    setIndexError(null);
+    setQueryError(null);
+  };
+
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#f0f6fc] flex flex-col font-sans">
+    <div className="min-h-screen bg-background text-slate-100 flex flex-col font-sans bg-radial-glow bg-grid-pattern selection:bg-brand-500/30 selection:text-white">
+      {/* Sticky Top Header */}
       <Header backendConnected={backendConnected} />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
-        {/* Hero Banner when no repository is selected yet */}
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* State 1: No repository active and not indexing */}
         {!indexedRepo && !isIndexing && (
-          <div className="text-center py-6 px-4 space-y-3">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#161b22] border border-[#30363d] text-xs text-[#8b949e]">
-              <Code2 className="w-3.5 h-3.5 text-[#58a6ff]" />
-              <span>Full Repository AST & Vector Embeddings</span>
+          <div className="space-y-6 animate-fade-in">
+            <Hero />
+
+            <section>
+              <RepositoryInput
+                onIndex={handleIndexRepository}
+                isLoading={isIndexing}
+                error={indexError}
+              />
+            </section>
+
+            {/* Architecture Highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-6 border-t border-surface-border">
+              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-sky-400">
+                  <Database className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-semibold text-white font-mono">
+                  ChromaDB Collections
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Deterministic vector collections per repository with idempotent caching to prevent redundant re-embedding.
+                </p>
+              </div>
+
+              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-emerald-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-semibold text-white font-mono">
+                  Source Evidence Grounding
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Inspect exact code chunks, file paths, and cosine similarity metrics behind every synthesized answer.
+                </p>
+              </div>
+
+              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-brand-400">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-semibold text-white font-mono">
+                  Gemini Generation
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Zero hallucination reasoning strictly constrained to retrieved AST and documentation context.
+                </p>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#f0f6fc]">
-              Understand any codebase in seconds
-            </h2>
-            <p className="text-sm text-[#8b949e] max-w-xl mx-auto leading-relaxed">
-              Paste a public GitHub repository URL to index its source files into
-              ChromaDB and ask architectural or implementation questions grounded by Gemini.
-            </p>
           </div>
         )}
 
-        {/* Section 1: Repository Input */}
-        <section>
-          <RepositoryInput
-            onIndex={handleIndexRepository}
-            isLoading={isIndexing}
-            error={indexError}
-          />
-        </section>
+        {/* State 2: Actively Indexing Pipeline */}
+        {isIndexing && (
+          <section className="py-4">
+            <AnalysisProgress repositoryUrl={activeRepoUrl} />
+          </section>
+        )}
 
-        {/* Section 2: Repository Status if indexed */}
-        {indexedRepo && (
-          <section className="space-y-4">
-            <RepositoryStatus data={indexedRepo} />
+        {/* State 3: Repository Indexed & Ready */}
+        {indexedRepo && !isIndexing && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Repository Telemetry Bar */}
+            <RepositoryOverview
+              data={indexedRepo}
+              onReset={handleResetRepo}
+            />
 
-            {/* Suggested Questions */}
+            {/* Suggested Question Chips */}
             <SuggestedQuestions
               onSelectQuestion={handleSelectSuggestedQuestion}
               disabled={isQuerying}
             />
 
-            {/* Question Input */}
+            {/* Query Input Panel */}
             <QuestionInput
               onAsk={handleAskQuestion}
               isLoading={isQuerying}
@@ -155,72 +211,30 @@ export const App: React.FC = () => {
               questionValue={questionValue}
               onQuestionChange={setQuestionValue}
             />
-          </section>
-        )}
 
-        {/* Section 3: AI Answer & Sources */}
-        {queryResult && (
-          <section className="space-y-5">
-            <AnswerPanel
-              answer={queryResult.answer}
-              question={queryResult.question}
-              repository={queryResult.repository}
-            />
+            {/* AI Answer & Source Evidence */}
+            {queryResult && (
+              <section className="space-y-5 pt-2">
+                <AnswerPanel
+                  answer={queryResult.answer}
+                  question={queryResult.question}
+                  repository={queryResult.repository}
+                  sourcesCount={queryResult.sources.length}
+                />
 
-            <SourcesPanel sources={queryResult.sources} />
-          </section>
-        )}
-
-        {/* Feature Highlights on empty state */}
-        {!indexedRepo && !isIndexing && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-[#30363d]">
-            <div className="bg-[#161b22] p-4 rounded-xl border border-[#30363d] space-y-2">
-              <div className="p-2 w-fit rounded-lg bg-[#21262d] text-[#58a6ff]">
-                <Database className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f0f6fc]">
-                ChromaDB Collections
-              </h3>
-              <p className="text-xs text-[#8b949e] leading-relaxed">
-                Deterministic collection names per repository with idempotent caching to prevent re-embedding.
-              </p>
-            </div>
-
-            <div className="bg-[#161b22] p-4 rounded-xl border border-[#30363d] space-y-2">
-              <div className="p-2 w-fit rounded-lg bg-[#21262d] text-[#3fb950]">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f0f6fc]">
-                Source Attribution
-              </h3>
-              <p className="text-xs text-[#8b949e] leading-relaxed">
-                Inspect exact code chunks, file paths, and cosine similarity metrics grounding every answer.
-              </p>
-            </div>
-
-            <div className="bg-[#161b22] p-4 rounded-xl border border-[#30363d] space-y-2">
-              <div className="p-2 w-fit rounded-lg bg-[#21262d] text-[#d29922]">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f0f6fc]">
-                Gemini 3.5 Generation
-              </h3>
-              <p className="text-xs text-[#8b949e] leading-relaxed">
-                Accurate, strictly grounded reasoning over retrieved code and documentation files.
-              </p>
-            </div>
+                <SourcesPanel
+                  sources={queryResult.sources}
+                  repository={queryResult.repository}
+                />
+              </section>
+            )}
           </div>
         )}
       </main>
 
-      <footer className="border-t border-[#30363d] py-5 mt-auto bg-[#161b22]/40 text-center text-xs text-[#8b949e]">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>GitHub Repository AI Analyst &bull; Portfolio Project</span>
-          <span className="text-[11px] text-[#8b949e]/80">
-            Powered by FastAPI, ChromaDB & Google Gemini
-          </span>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
+export default App;

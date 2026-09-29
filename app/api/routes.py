@@ -13,9 +13,26 @@ if _app_dir not in sys.path:
 try:
     from app.services.repository_service import RepositoryService
     from app.services.rag_service import RAGService
+    from app.github_client import (
+        GitHubAPIException,
+        GitHubAuthError,
+        GitHubForbiddenError,
+        GitHubRateLimitError,
+        GitHubRepoNotFoundError,
+    )
+    from app.embedding import GeminiQuotaExceededError, GeminiEmbeddingError
 except ImportError:
     from services.repository_service import RepositoryService
     from services.rag_service import RAGService
+    from github_client import (
+        GitHubAPIException,
+        GitHubAuthError,
+        GitHubForbiddenError,
+        GitHubRateLimitError,
+        GitHubRepoNotFoundError,
+    )
+    from embedding import GeminiQuotaExceededError, GeminiEmbeddingError
+
 
 
 
@@ -126,6 +143,32 @@ def index_repository(request: IndexRequest):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except GitHubRepoNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except GitHubAuthError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e)
+        )
+    except GitHubRateLimitError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e)
+        )
+    except GitHubForbiddenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    except GitHubAPIException as e:
+        http_code = e.status_code if 400 <= e.status_code < 600 else status.HTTP_502_BAD_GATEWAY
+        raise HTTPException(
+            status_code=http_code,
+            detail=str(e)
+        )
     except requests.exceptions.HTTPError as e:
         status_code = getattr(e.response, "status_code", None)
         if status_code == 404:
@@ -133,9 +176,14 @@ def index_repository(request: IndexRequest):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="GitHub repository not found. Verify repository URL and visibility."
             )
-        elif status_code in (401, 403):
+        elif status_code == 401:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="GitHub authentication failed. Please verify your GITHUB_TOKEN."
+            )
+        elif status_code in (403, 429):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="GitHub API access denied or rate limit exceeded."
             )
         else:
@@ -143,17 +191,31 @@ def index_repository(request: IndexRequest):
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"GitHub API error (status {status_code})."
             )
+    except GeminiQuotaExceededError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e)
+        )
+    except GeminiEmbeddingError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(e)
+        )
     except Exception as e:
         error_msg = str(e)
-        # Avoid exposing raw sensitive credentials
-        if "API key" in error_msg or "429" in error_msg:
+        # Avoid exposing raw sensitive credentials or API keys
+        if "API key" in error_msg or "429" in error_msg or "ResourceExhausted" in error_msg or "quota" in error_msg.lower():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="AI service rate limit or unavailable. Please try again shortly."
             )
+        # Sanitize any unexpected internal token leaks
+        safe_msg = error_msg.split("\n")[0]
+        if "token" in safe_msg.lower() or "key" in safe_msg.lower():
+            safe_msg = "An internal processing error occurred."
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Indexing failed: {error_msg}"
+            detail=f"Indexing failed: {safe_msg}"
         )
 
 
@@ -193,12 +255,15 @@ def query_repository(request: QueryRequest):
         )
     except Exception as e:
         error_msg = str(e)
-        if "API key" in error_msg or "429" in error_msg:
+        if "API key" in error_msg or "429" in error_msg or "ResourceExhausted" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="AI service rate limit or unavailable. Please try again shortly."
             )
+        safe_msg = error_msg.split("\n")[0]
+        if "token" in safe_msg.lower() or "key" in safe_msg.lower():
+            safe_msg = "An error occurred while generating the answer."
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Query failed: {error_msg}"
+            detail=f"Query failed: {safe_msg}"
         )
