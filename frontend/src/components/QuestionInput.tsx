@@ -45,10 +45,10 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
 
       {/* ── Query Composer Container */}
       <div
-        className={`bg-white rounded-2xl border transition-all duration-200 shadow-lifted ${
+        className={`bg-white/85 backdrop-blur-md rounded-2xl border transition-all duration-200 shadow-glass hover:shadow-glass-hover ${
           error
             ? 'border-error/40 ring-2 ring-error/10'
-            : 'border-stone-300 hover:border-stone-400 focus-within:border-cobalt-500 focus-within:ring-4 focus-within:ring-cobalt-500/15'
+            : 'border-stone-200/90 hover:border-stone-300 focus-within:border-cobalt-500 focus-within:ring-4 focus-within:ring-cobalt-500/15'
         }`}
       >
         <form onSubmit={handleSubmit}>

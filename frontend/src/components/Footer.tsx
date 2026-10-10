@@ -3,7 +3,7 @@ import { Github, ArrowUpRight } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-stone-200 bg-canvas py-10 mt-auto">
+    <footer className="border-t border-stone-200/70 bg-white/40 backdrop-blur-md py-10 mt-auto transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
             href="https://github.com/harshrew-bit/github-repository-ai-analyst"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 text-xs font-mono text-ink-tertiary hover:text-ink transition-colors py-1 px-2.5 rounded-md hover:bg-stone-100"
+            className="flex items-center gap-1.5 text-xs font-mono text-ink-tertiary hover:text-ink transition-all py-1 px-2.5 rounded-md hover:bg-white/80 hover:shadow-subtle hover:-translate-y-0.5 active:translate-y-0"
             aria-label="View source on GitHub"
           >
             <Github className="w-3.5 h-3.5" aria-hidden="true" />

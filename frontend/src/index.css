@@ -19,7 +19,7 @@
   }
 
   body {
-    background-color: #FAFAF8;
+    background-color: transparent;
     color: #1A1917;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -69,44 +69,41 @@
     @apply text-2xl sm:text-3xl font-bold tracking-tight leading-[1.15];
   }
 
-  /* Subtle texture overlay for the warm canvas */
+  /* Subtle texture overlay for warm tactile surfaces */
   .canvas-texture {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAFAF8'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%231A1917' opacity='0.015'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAF7F2'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%231A1917' opacity='0.015'/%3E%3C/svg%3E");
   }
 
-  /* Dark cinematic atmosphere mesh background */
-  .hero-atmosphere {
-    background-color: #111110;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(21, 112, 239, 0.18), transparent 70%),
-      radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02), transparent 40%),
-      linear-gradient(to bottom, #111110 0%, #161615 60%, #111110 100%);
+  /* Frosted glass surface atop warm mesh */
+  .glass-panel {
+    @apply bg-white/75 backdrop-blur-md border border-stone-200/80 shadow-subtle;
+  }
+  .glass-panel-interactive {
+    @apply bg-white/75 backdrop-blur-md border border-stone-200/80 shadow-subtle
+           hover:bg-white/90 hover:border-stone-300 hover:shadow-lifted hover:-translate-y-0.5
+           active:translate-y-0 transition-all duration-200;
+  }
+  .glass-panel-dark {
+    @apply bg-charcoal-900/90 backdrop-blur-xl border border-charcoal-700/80 shadow-dark-lifted;
   }
 
-  /* Micro technical grid pattern on dark surfaces */
-  .dark-technical-grid {
-    background-size: 32px 32px;
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  }
-
-  /* Primary CTA button */
+  /* Primary CTA button with refined lift and glow */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl
            bg-cobalt-500 text-white text-sm font-semibold
            hover:bg-cobalt-600 active:bg-cobalt-700
+           hover:-translate-y-0.5 active:translate-y-0
            shadow-cobalt-sm hover:shadow-cobalt
            transition-all duration-200
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-400 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal-900
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none;
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-400 focus-visible:ring-offset-2
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0;
   }
 
   /* Ghost button for light surfaces */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg
            text-xs sm:text-sm font-medium text-ink-secondary
-           hover:bg-stone-200/60 hover:text-ink
+           hover:bg-stone-200/60 hover:text-ink hover:-translate-y-0.5 active:translate-y-0
            transition-all duration-150
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30;
   }
@@ -115,7 +112,7 @@
   .btn-ghost-dark {
     @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg
            text-xs sm:text-sm font-medium text-stone-300
-           hover:bg-charcoal-800 hover:text-white
+           hover:bg-charcoal-800 hover:text-white hover:-translate-y-0.5 active:translate-y-0
            transition-all duration-150
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-400/40;
   }
@@ -124,12 +121,12 @@
   .chip {
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full
            text-xs font-medium border border-stone-300
-           bg-white text-ink-secondary;
+           bg-white/80 backdrop-blur-xs text-ink-secondary;
   }
   .chip-dark {
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full
            text-2xs font-mono border border-charcoal-700
-           bg-charcoal-850 text-stone-300;
+           bg-charcoal-850/90 text-stone-300;
   }
 
   /* Monospace metadata label */
@@ -163,20 +160,15 @@
   }
 }
 
-/* ─── Hero product visualization decorations ─────────────────────────────────── */
-.hero-glow-cobalt {
-  background: radial-gradient(circle, rgba(21, 112, 239, 0.15) 0%, transparent 70%);
+/* ─── Living RAG Pipeline Visualizer Decorators ──────────────────────────────── */
+.pipeline-ray {
+  background: linear-gradient(90deg, transparent, rgba(61, 150, 255, 0.7), rgba(255, 128, 102, 0.8), transparent);
 }
 
 /* Subtle section separator with gradient fade */
 .section-separator {
   height: 1px;
-  background: linear-gradient(to right, transparent, #D8D6D0 15%, #D8D6D0 85%, transparent);
-}
-
-.section-separator-dark {
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08) 15%, rgba(255, 255, 255, 0.08) 85%, transparent);
+  background: linear-gradient(to right, transparent, rgba(216, 214, 208, 0.8) 15%, rgba(216, 214, 208, 0.8) 85%, transparent);
 }
 
 /* Syntax-highlighted code coloring (charcoal background) */

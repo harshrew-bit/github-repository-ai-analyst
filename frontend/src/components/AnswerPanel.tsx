@@ -89,7 +89,7 @@ export const AnswerPanel: React.FC<AnswerPanelProps> = ({
 
   return (
     <article
-      className="bg-white rounded-2xl border border-stone-200/90 p-6 sm:p-8 space-y-6 shadow-lifted animate-fade-up"
+      className="bg-white/85 backdrop-blur-md rounded-2xl border border-stone-200/90 p-6 sm:p-8 space-y-6 shadow-glass animate-fade-up"
       aria-label="Codebase analysis answer"
     >
 

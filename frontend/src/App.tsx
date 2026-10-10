@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { WarmMeshBackground } from './components/WarmMeshBackground';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { AnalysisProgress } from './components/AnalysisProgress';
@@ -111,13 +112,14 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas canvas-texture text-ink flex flex-col selection:bg-cobalt-100 selection:text-cobalt-700">
+    <div className="min-h-screen text-ink flex flex-col selection:bg-cobalt-100 selection:text-cobalt-700 relative">
+      {/* ── Continuous Warm Mesh Atmosphere Background */}
+      <WarmMeshBackground />
 
-      {/* ── Persistent Adaptive Header */}
+      {/* ── Persistent Frosted Glass Header */}
       <Header
         backendConnected={backendConnected}
         onLogoClick={view === 'workspace' || view === 'indexing' ? handleResetRepo : undefined}
-        variant={view === 'landing' ? 'dark' : 'light'}
       />
 
       {/* ── Main Content Area */}

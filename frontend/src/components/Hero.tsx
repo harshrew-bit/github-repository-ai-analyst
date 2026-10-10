@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  GitBranch, Binary, ShieldCheck, FileCode, Cpu
+  GitBranch, Binary, ShieldCheck, FileCode, Cpu, Sparkles
 } from 'lucide-react';
 import { RepositoryInput } from './RepositoryInput';
 
@@ -10,33 +10,34 @@ interface HeroProps {
   error: string | null;
 }
 
-// ─── Technical RAG Pipeline Visual Showcase ──────────────────────────────────
+// ─── Technical Living RAG Pipeline Visual Showcase ───────────────────────────
 const PipelineShowcase: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'requests' | 'fastapi'>('requests');
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-12 select-none" aria-label="RAG Architecture Showcase">
 
-      {/* Showcase Frame Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-charcoal-900 border border-charcoal-700/80 rounded-t-2xl">
+      {/* Showcase Frame Header — Frosted Technical Console */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-charcoal-900/90 border border-charcoal-700/80 rounded-t-2xl backdrop-blur-xl shadow-lg">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-          <span className="ml-2 font-mono text-2xs text-stone-300">
+          <span className="ml-2 font-mono text-2xs text-stone-300 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cobalt-400 animate-pulse" />
             rag_pipeline_telemetry.trace
           </span>
         </div>
 
         {/* Interactive preview tabs */}
-        <div className="flex items-center gap-1 bg-charcoal-850 p-0.5 rounded-lg border border-charcoal-700">
+        <div className="flex items-center gap-1 bg-charcoal-850/90 p-0.5 rounded-lg border border-charcoal-700">
           <button
             type="button"
             onClick={() => setActiveTab('requests')}
-            className={`px-2.5 py-1 rounded text-2xs font-mono transition-colors ${
+            className={`px-2.5 py-1 rounded text-2xs font-mono transition-all duration-150 ${
               activeTab === 'requests'
                 ? 'bg-cobalt-500 text-white font-medium shadow-sm'
-                : 'text-stone-300 hover:text-stone-100'
+                : 'text-stone-300 hover:text-white'
             }`}
           >
             psf/requests
@@ -44,10 +45,10 @@ const PipelineShowcase: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('fastapi')}
-            className={`px-2.5 py-1 rounded text-2xs font-mono transition-colors ${
+            className={`px-2.5 py-1 rounded text-2xs font-mono transition-all duration-150 ${
               activeTab === 'fastapi'
                 ? 'bg-cobalt-500 text-white font-medium shadow-sm'
-                : 'text-stone-300 hover:text-stone-100'
+                : 'text-stone-300 hover:text-white'
             }`}
           >
             tiangolo/fastapi
@@ -55,12 +56,17 @@ const PipelineShowcase: React.FC = () => {
         </div>
       </div>
 
+      {/* Active Pipeline Data Beam (Living Pipeline Signal) */}
+      <div className="relative h-0.5 w-full bg-charcoal-800 overflow-hidden" aria-hidden="true">
+        <div className="h-full w-1/3 pipeline-ray animate-beam-flow" />
+      </div>
+
       {/* Showcase Grid Canvas */}
-      <div className="bg-charcoal-950/95 border-x border-b border-charcoal-700/80 rounded-b-2xl p-4 sm:p-6 backdrop-blur-xl shadow-2xl">
+      <div className="bg-charcoal-950/92 border-x border-b border-charcoal-700/80 rounded-b-2xl p-4 sm:p-6 backdrop-blur-2xl shadow-deep">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 relative">
 
           {/* ══ STAGE 1: Git Ingestion & AST Decomposition ══ */}
-          <div className="flex flex-col space-y-3 bg-charcoal-900/70 border border-charcoal-700/60 rounded-xl p-4">
+          <div className="flex flex-col space-y-3 bg-charcoal-900/75 border border-charcoal-700/60 rounded-xl p-4 hover:border-cobalt-500/40 transition-colors">
             <div className="flex items-center justify-between pb-2 border-b border-charcoal-800">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-md bg-cobalt-950 border border-cobalt-700/60 flex items-center justify-center">
@@ -76,7 +82,7 @@ const PipelineShowcase: React.FC = () => {
             </div>
 
             <p className="text-2xs text-stone-300 leading-relaxed">
-              Code is parsed along functional AST boundaries, maintaining class declarations and variable scopes intact.
+              Code parsed along functional AST boundaries, keeping scopes and signatures intact.
             </p>
 
             {/* Simulated file excerpt */}
@@ -85,7 +91,7 @@ const PipelineShowcase: React.FC = () => {
                 <span className="truncate">
                   {activeTab === 'requests' ? 'requests/adapters.py' : 'fastapi/routing.py'}
                 </span>
-                <span className="text-cobalt-400">chunk #14</span>
+                <span className="text-cobalt-400 font-semibold">chunk #14</span>
               </div>
               <pre className="text-3xs text-stone-300 leading-normal overflow-x-auto">
 {activeTab === 'requests' ? (
@@ -104,12 +110,12 @@ const PipelineShowcase: React.FC = () => {
 
             <div className="mt-auto pt-2 flex items-center justify-between text-3xs font-mono text-stone-400 border-t border-charcoal-800/60">
               <span>Overlap: 120 tokens</span>
-              <span className="text-stone-300">SHA-1: 9f8a2b…</span>
+              <span className="text-stone-300 font-medium">AST-Scoped</span>
             </div>
           </div>
 
           {/* ══ STAGE 2: 3,072-Dimensional Vector Projection ══ */}
-          <div className="flex flex-col space-y-3 bg-charcoal-900/70 border border-charcoal-700/60 rounded-xl p-4">
+          <div className="flex flex-col space-y-3 bg-charcoal-900/75 border border-charcoal-700/60 rounded-xl p-4 hover:border-sky-500/40 transition-colors">
             <div className="flex items-center justify-between pb-2 border-b border-charcoal-800">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-md bg-sky-950 border border-sky-700/60 flex items-center justify-center">
@@ -125,7 +131,7 @@ const PipelineShowcase: React.FC = () => {
             </div>
 
             <p className="text-2xs text-stone-300 leading-relaxed">
-              Mapped into high-density 3,072-dimensional space stored in ChromaDB HNSW cosine collections.
+              Mapped into high-density 3,072-dimensional space stored in ChromaDB HNSW cosine spaces.
             </p>
 
             {/* Vector matrix preview */}
@@ -139,10 +145,13 @@ const PipelineShowcase: React.FC = () => {
               <div className="space-y-1.5 py-1">
                 <div className="flex items-center justify-between text-3xs text-stone-400">
                   <span>Cosine Proximity</span>
-                  <span className="text-emerald-400 font-bold">0.9621</span>
+                  <span className="text-emerald-400 font-bold font-mono">0.9621 · 96.2%</span>
                 </div>
                 <div className="w-full h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-cobalt-500 to-emerald-400 rounded-full" style={{ width: '96.2%' }} />
+                  <div
+                    className="h-full bg-gradient-to-r from-cobalt-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-700"
+                    style={{ width: '96.2%' }}
+                  />
                 </div>
               </div>
 
@@ -154,12 +163,12 @@ const PipelineShowcase: React.FC = () => {
 
             <div className="mt-auto pt-2 flex items-center justify-between text-3xs font-mono text-stone-400 border-t border-charcoal-800/60">
               <span>Collection: v2_hnsw</span>
-              <span className="text-emerald-400">Deterministic</span>
+              <span className="text-emerald-400 font-medium">Deterministic</span>
             </div>
           </div>
 
           {/* ══ STAGE 3: Semantic Retrieval & Grounded Answer ══ */}
-          <div className="flex flex-col space-y-3 bg-charcoal-900/70 border border-charcoal-700/60 rounded-xl p-4">
+          <div className="flex flex-col space-y-3 bg-charcoal-900/75 border border-charcoal-700/60 rounded-xl p-4 hover:border-emerald-500/40 transition-colors">
             <div className="flex items-center justify-between pb-2 border-b border-charcoal-800">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-md bg-emerald-950 border border-emerald-700/60 flex items-center justify-center">
@@ -185,7 +194,7 @@ const PipelineShowcase: React.FC = () => {
                   ? 'Q: How does retry backoff function?'
                   : 'Q: How are async dependencies injected?'}
               </div>
-              <p className="text-3xs text-stone-300 leading-relaxed">
+              <p className="text-3xs text-stone-300 leading-relaxed line-clamp-3">
                 {activeTab === 'requests'
                   ? 'The HTTPAdapter delegates retries to urllib3.util.Retry, passing max_retries into the transport connection pool…'
                   : 'FastAPI resolves dependants recursively via solve_dependencies, executing async callables prior to route execution…'}
@@ -194,7 +203,7 @@ const PipelineShowcase: React.FC = () => {
 
             <div className="mt-auto pt-2 flex items-center justify-between text-3xs font-mono text-stone-400 border-t border-charcoal-800/60">
               <span>Citations: 100% verified</span>
-              <span className="text-emerald-400">Zero Hallucination</span>
+              <span className="text-emerald-400 font-medium">Zero Hallucination</span>
             </div>
           </div>
 
@@ -238,80 +247,79 @@ export const Hero: React.FC<HeroProps> = ({ onIndex, isLoading, error }) => {
     <div className="w-full">
 
       {/* ══════════════════════════════════════════════════════════════════════
-          CINEMATIC ATMOSPHERE HERO SECTION (DARK CHARCOAL)
+          ATMOSPHERIC HERO SECTION (SEAMLESS CONTINUOUS BACKGROUND)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="hero-atmosphere dark-technical-grid relative pt-12 pb-20 px-4 sm:px-6 lg:px-8 border-b border-charcoal-800">
-
-        {/* Ambient lighting accents */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-96 hero-glow-cobalt pointer-events-none" />
-
+      <section className="relative pt-12 sm:pt-16 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
         <div className="relative max-w-5xl mx-auto space-y-8 text-center">
 
-          {/* System tag badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal-850/90 border border-charcoal-700 text-xs font-mono text-stone-300 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-cobalt-400 animate-pulse" />
-            <span>GEMINI EMBEDDING 2 · CHROMADB · FASTAPI RAG</span>
+          {/* System tag badge with live pulse */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/90 text-xs font-mono text-ink-secondary shadow-xs transition-transform duration-200 hover:scale-105">
+            <span className="w-2 h-2 rounded-full bg-cobalt-500 animate-pulse" />
+            <span className="font-medium text-ink">GEMINI EMBEDDING 2 · CHROMADB · FASTAPI RAG</span>
+            <Sparkles className="w-3 h-3 text-amber-500 opacity-80" />
           </div>
 
-          {/* Oversized Confident Headline */}
+          {/* Oversized Confident Editorial Headline */}
           <div className="space-y-4">
-            <h1 className="text-hero-headline text-white tracking-tighter">
+            <h1 className="text-hero-headline text-ink tracking-tighter">
               Understand the code
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cobalt-400 via-sky-300 to-indigo-200">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cobalt-600 via-indigo-600 to-rose-600">
                 behind every repository.
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-stone-300 leading-relaxed max-w-2xl mx-auto font-normal">
+            <p className="text-base sm:text-lg md:text-xl text-ink-secondary leading-relaxed max-w-2xl mx-auto font-normal">
               Deterministic codebase intelligence for engineers. Explore architectures, follow execution flows, and receive answers strictly verified against real AST syntax.
             </p>
           </div>
 
-          {/* Prominent Command Input — naturally integrated into hero */}
+          {/* Naturally Integrated Command Input Bar */}
           <div className="pt-2">
             <RepositoryInput
               onIndex={onIndex}
               isLoading={isLoading}
               error={error}
-              variant="dark"
             />
           </div>
 
-          {/* Panoramic RAG Architecture Showcase */}
+          {/* Panoramic Living RAG Architecture Showcase */}
           <PipelineShowcase />
 
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          EDITORIAL ARCHITECTURE PRINCIPLES (WARM IVORY)
+          EDITORIAL ARCHITECTURE PRINCIPLES (WARM MESH CONTINUITY)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="bg-canvas py-20 px-4 sm:px-6 lg:px-8 border-b border-stone-200">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-b border-stone-200/60">
         <div className="max-w-6xl mx-auto space-y-12">
 
           {/* Section Masthead */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-stone-300">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-stone-300/80">
             <div>
-              <span className="text-2xs font-mono uppercase tracking-widest text-cobalt-600 block mb-1">
+              <span className="text-2xs font-mono uppercase tracking-widest text-cobalt-600 font-semibold block mb-1">
                 Engineering Foundations
               </span>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
                 How Codebase Intelligence Works
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-ink-tertiary max-w-md">
+            <p className="text-xs sm:text-sm text-ink-secondary max-w-md leading-relaxed">
               A high-precision RAG pipeline built from recursive AST chunking, modern embedding models, and grounded synthesis.
             </p>
           </div>
 
-          {/* Editorial 3-Column Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Editorial 3-Column Grid with Translucent Glass Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {principles.map((p) => {
               const Icon = p.icon;
               return (
-                <div key={p.num} className="space-y-4 group">
-                  <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+                <div
+                  key={p.num}
+                  className="glass-panel-interactive rounded-2xl p-6 sm:p-7 space-y-4 group cursor-default"
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
                     <span className="text-sm font-mono font-bold text-cobalt-600">
                       {p.num}
                     </span>

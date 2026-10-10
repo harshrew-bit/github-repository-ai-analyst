@@ -59,7 +59,7 @@ export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({
               type="button"
               onClick={() => onSelectQuestion(item.question)}
               disabled={disabled}
-              className="group text-left p-3.5 rounded-xl bg-white border border-stone-200/90 hover:border-cobalt-400 hover:shadow-cobalt-sm transition-all duration-150 flex items-start justify-between gap-3 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30"
+              className="group text-left p-3.5 rounded-xl bg-white/75 backdrop-blur-md border border-stone-200/80 hover:bg-white hover:border-cobalt-400 hover:shadow-glass hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 flex items-start justify-between gap-3 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30"
               aria-label={`Ask: ${item.question}`}
             >
               <div className="flex items-start gap-3 min-w-0">

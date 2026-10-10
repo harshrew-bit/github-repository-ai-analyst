@@ -95,7 +95,7 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUr
     <div className="w-full max-w-2xl mx-auto animate-fade-up" role="status" aria-live="polite" aria-label="Indexing progress">
 
       {/* Header card */}
-      <div className="card-lifted p-5 sm:p-6 space-y-5">
+      <div className="glass-panel rounded-2xl p-6 sm:p-7 space-y-6 shadow-glass">
 
         {/* Top bar */}
         <div className="flex items-center justify-between">
@@ -118,9 +118,9 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUr
 
         {/* Progress bar */}
         <div className="space-y-1.5">
-          <div className="h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
+          <div className="h-2 w-full rounded-full bg-stone-200/70 overflow-hidden">
             <div
-              className="h-full rounded-full bg-cobalt-500 transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-cobalt-500 via-sky-400 to-indigo-500 transition-all duration-700 ease-out shadow-xs"
               style={{ width: `${Math.min(95, (activeStepIndex / (PIPELINE_STEPS.length - 1)) * 100)}%` }}
               role="progressbar"
               aria-valuenow={activeStepIndex}
@@ -135,7 +135,7 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUr
         </div>
 
         {/* Steps */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {PIPELINE_STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isComplete = idx < activeStepIndex;
@@ -144,12 +144,12 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUr
             return (
               <div
                 key={step.id}
-                className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-300 ${
                   isCurrent
-                    ? 'bg-cobalt-50 border-cobalt-200'
+                    ? 'bg-cobalt-50/90 border-cobalt-200/90 shadow-subtle'
                     : isComplete
-                    ? 'bg-stone-50 border-stone-200'
-                    : 'bg-transparent border-transparent opacity-40'
+                    ? 'bg-white/70 border-stone-200/80'
+                    : 'bg-white/30 border-stone-200/40 opacity-40'
                 }`}
               >
                 {/* Indicator */}

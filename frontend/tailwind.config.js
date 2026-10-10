@@ -70,6 +70,36 @@ export default {
           text: '#991B1B',
         },
 
+        // Warm mesh gradient tokens (coral, peach, blush, cream)
+        coral: {
+          50:  '#FFF5F2',
+          100: '#FFE8E2',
+          200: '#FFD4C9',
+          300: '#FFAF9E',
+          400: '#FF8066',
+          500: '#FF6347',
+          600: '#E64A2E',
+        },
+        peach: {
+          50:  '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FB923C',
+          500: '#F97316',
+        },
+        blush: {
+          50:  '#FFF1F2',
+          100: '#FFE4E6',
+          200: '#FECDD3',
+          300: '#FDA4AF',
+          400: '#FB7185',
+        },
+        cream: {
+          warm: '#FBF9F5',
+          canvas: '#FAF7F2',
+        },
+
         // Cinematic charcoal scale for dark atmospheric surfaces & code blocks
         charcoal: {
           950: '#0B0B0A',
@@ -116,6 +146,9 @@ export default {
         'cobalt-sm': '0 2px 8px rgba(21, 112, 239, 0.20)',
         'cobalt': '0 4px 20px rgba(21, 112, 239, 0.30)',
         'cobalt-glow': '0 0 32px rgba(21, 112, 239, 0.18)',
+        'warm-glow': '0 0 50px rgba(255, 128, 102, 0.16)',
+        'glass': '0 8px 30px rgba(26, 25, 23, 0.05), 0 1px 2px rgba(26, 25, 23, 0.03)',
+        'glass-hover': '0 12px 36px rgba(26, 25, 23, 0.08), 0 2px 4px rgba(26, 25, 23, 0.04)',
         'inner-subtle': 'inset 0 1px 2px rgba(26, 25, 23, 0.04)',
         'dark-lifted': '0 8px 32px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(255, 255, 255, 0.05) inset',
       },
@@ -125,9 +158,11 @@ export default {
         'fade-up': 'fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-down': 'slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'pulse-dot': 'pulseDot 2s ease-in-out infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shimmer': 'shimmer 1.5s ease-in-out infinite',
         'float': 'float 6s ease-in-out infinite',
         'scan-line': 'scanLine 3s linear infinite',
+        'beam-flow': 'beamFlow 2.5s ease-in-out infinite',
       },
 
       keyframes: {
@@ -158,6 +193,12 @@ export default {
         scanLine: {
           '0%': { transform: 'translateY(0%)' },
           '100%': { transform: 'translateY(400%)' },
+        },
+        beamFlow: {
+          '0%': { transform: 'translateX(-100%)', opacity: '0' },
+          '30%': { opacity: '1' },
+          '70%': { opacity: '1' },
+          '100%': { transform: 'translateX(200%)', opacity: '0' },
         },
       },
     },

@@ -71,7 +71,7 @@ export const RepositoryOverview: React.FC<RepositoryOverviewProps> = ({ data, on
         <button
           type="button"
           onClick={onReset}
-          className="btn-ghost text-xs self-start sm:self-auto border border-stone-200 bg-white shadow-subtle hover:bg-stone-50"
+          className="btn-ghost text-xs self-start sm:self-auto border border-stone-200/90 bg-white/80 backdrop-blur-xs shadow-subtle hover:bg-white hover:shadow-lifted hover:-translate-y-0.5 active:translate-y-0 transition-all"
           aria-label="Analyze a different repository"
         >
           <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
@@ -80,7 +80,7 @@ export const RepositoryOverview: React.FC<RepositoryOverviewProps> = ({ data, on
       </div>
 
       {/* ── Technical Telemetry Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 px-4 rounded-xl bg-stone-100/70 border border-stone-200/90 font-mono text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3.5 px-5 rounded-2xl bg-white/75 backdrop-blur-md border border-stone-200/80 shadow-glass font-mono text-xs">
 
         {/* Chunks */}
         <div className="space-y-0.5">

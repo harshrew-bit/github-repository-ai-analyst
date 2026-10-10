@@ -56,7 +56,11 @@ export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository
     : undefined;
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white overflow-hidden transition-all duration-150 hover:border-cobalt-300 shadow-subtle">
+    <div className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+      isExpanded
+        ? 'bg-white/90 backdrop-blur-md border-cobalt-300/80 shadow-glass'
+        : 'bg-white/75 backdrop-blur-md border-stone-200/80 hover:bg-white/90 hover:border-stone-300 shadow-subtle hover:shadow-lifted hover:-translate-y-0.5'
+    }`}>
 
       {/* ── Technical Header Row */}
       <button
