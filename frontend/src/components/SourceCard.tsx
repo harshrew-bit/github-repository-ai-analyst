@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  FileCode, ChevronDown, ChevronRight, Copy, Check, ExternalLink,
+  ChevronDown, ChevronRight, Copy, Check, ExternalLink,
 } from 'lucide-react';
 import { SourceItem } from '../types/api';
 
@@ -10,17 +10,17 @@ interface SourceCardProps {
   repository?: string;
 }
 
-const LANGUAGE_CHIP: Record<string, string> = {
-  python:     'bg-sky-50     text-sky-700     border-sky-200',
-  typescript: 'bg-amber-50   text-amber-700   border-amber-200',
-  javascript: 'bg-yellow-50  text-yellow-700  border-yellow-200',
-  go:         'bg-cyan-50    text-cyan-700    border-cyan-200',
-  rust:       'bg-orange-50  text-orange-700  border-orange-200',
-  markdown:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+const LANGUAGE_BADGE: Record<string, string> = {
+  python:     'bg-sky-50 text-sky-800 border-sky-200',
+  typescript: 'bg-amber-50 text-amber-800 border-amber-200',
+  javascript: 'bg-yellow-50 text-yellow-800 border-yellow-200',
+  go:         'bg-cyan-50 text-cyan-800 border-cyan-200',
+  rust:       'bg-orange-50 text-orange-800 border-orange-200',
+  markdown:   'bg-emerald-50 text-emerald-800 border-emerald-200',
 };
 
-function getLanguageChip(lang?: string): string {
-  return LANGUAGE_CHIP[lang?.toLowerCase() ?? ''] ?? 'bg-stone-50 text-stone-600 border-stone-200';
+function getLanguageBadge(lang?: string): string {
+  return LANGUAGE_BADGE[lang?.toLowerCase() ?? ''] ?? 'bg-stone-100 text-stone-700 border-stone-200';
 }
 
 export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository }) => {
@@ -35,15 +35,20 @@ export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Cosine score as percent
+  // Cosine score calculation
   const scorePercent = Math.min(100, Math.max(0, source.score * 100));
   const scoreDisplay = scorePercent.toFixed(1);
+  const rawScore = source.score.toFixed(4);
 
-  // Score color band
   const scoreColor =
-    scorePercent >= 80 ? 'text-success'
-    : scorePercent >= 60 ? 'text-warning'
-    : 'text-ink-tertiary';
+    scorePercent >= 80 ? 'text-emerald-700'
+    : scorePercent >= 60 ? 'text-amber-700'
+    : 'text-stone-600';
+
+  const barColor =
+    scorePercent >= 80 ? 'bg-emerald-500'
+    : scorePercent >= 60 ? 'bg-amber-500'
+    : 'bg-stone-400';
 
   const lines = source.content?.split('\n') ?? [];
   const fileUrl = repository
@@ -51,36 +56,31 @@ export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository
     : undefined;
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white overflow-hidden transition-all duration-150 hover:border-cobalt-200 hover:shadow-subtle">
+    <div className="rounded-xl border border-stone-200 bg-white overflow-hidden transition-all duration-150 hover:border-cobalt-300 shadow-subtle">
 
-      {/* ── Header row (always visible) */}
+      {/* ── Technical Header Row */}
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30 focus-visible:rounded-t-xl"
+        className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30"
         aria-expanded={isExpanded}
         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} source: ${source.file_path}`}
       >
-        {/* Left: rank + file */}
-        <div className="flex items-center gap-3 min-w-0 pr-4">
+        {/* Left: Rank, File, Metadata */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-4">
 
-          {/* Rank */}
+          {/* Sequential Rank */}
           <span
-            className="text-2xs font-mono font-bold text-cobalt-400 w-5 flex-shrink-0 text-center"
+            className="text-2xs font-mono font-bold text-cobalt-600 bg-cobalt-50 border border-cobalt-200/80 rounded-md px-1.5 py-0.5 flex-shrink-0"
             aria-hidden="true"
           >
-            #{rank}
+            #{rank.toString().padStart(2, '0')}
           </span>
 
-          {/* File icon */}
-          <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-200 flex items-center justify-center flex-shrink-0">
-            <FileCode className="w-3.5 h-3.5 text-ink-tertiary" aria-hidden="true" />
-          </div>
-
-          {/* Path + metadata */}
+          {/* Path & Metadata */}
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-mono font-medium text-ink truncate block max-w-[16rem] sm:max-w-none">
+              <span className="text-xs sm:text-sm font-mono font-medium text-ink truncate block max-w-[15rem] sm:max-w-none">
                 {source.file_path}
               </span>
               {fileUrl && (
@@ -89,95 +89,100 @@ export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository
                   target="_blank"
                   rel="noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-ink-tertiary hover:text-cobalt-500 transition-colors flex-shrink-0"
+                  className="text-ink-tertiary hover:text-cobalt-600 transition-colors flex-shrink-0"
                   aria-label={`Open ${source.file_path} on GitHub`}
                 >
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </a>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-2xs font-mono text-ink-tertiary">
-                Chunk #{source.chunk_id}
+
+            <div className="flex items-center gap-2.5 mt-1 flex-wrap">
+              <span className="text-3xs font-mono text-ink-tertiary">
+                Chunk ID: #{source.chunk_id}
               </span>
               {source.language && (
                 <span
-                  className={`text-2xs font-mono px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${getLanguageChip(source.language)}`}
+                  className={`text-3xs font-mono px-1.5 py-0.2 rounded border uppercase tracking-wider ${getLanguageBadge(source.language)}`}
                 >
                   {source.language}
                 </span>
               )}
+              <span className="text-3xs font-mono text-ink-tertiary hidden sm:inline">
+                {lines.length} lines
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Right: score + chevron */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right hidden sm:block">
-            <span className="meta-label block">Cosine</span>
+        {/* Right: Technical Cosine Metric & Toggle */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="text-right hidden sm:block font-mono">
+            <span className="text-3xs uppercase tracking-wider text-ink-tertiary block">
+              Cosine Similarity
+            </span>
             <div className="flex items-center gap-2 justify-end mt-0.5">
-              {/* Score bar */}
-              <div className="w-14 h-1.5 bg-stone-100 rounded-full overflow-hidden" aria-hidden="true">
+              <div className="w-16 h-1.5 bg-stone-100 rounded-full overflow-hidden" aria-hidden="true">
                 <div
-                  className={`h-full rounded-full transition-all ${
-                    scorePercent >= 80 ? 'bg-success' : scorePercent >= 60 ? 'bg-warning' : 'bg-stone-400'
-                  }`}
+                  className={`h-full rounded-full transition-all ${barColor}`}
                   style={{ width: `${scorePercent}%` }}
                 />
               </div>
-              <span className={`text-xs font-mono font-semibold ${scoreColor}`}>
+              <span className={`text-xs font-semibold ${scoreColor}`}>
                 {scoreDisplay}%
               </span>
             </div>
           </div>
 
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-cobalt-400" aria-hidden="true" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-ink-tertiary" aria-hidden="true" />
-          )}
+          <div className="w-6 h-6 rounded-md bg-stone-100 flex items-center justify-center text-ink-tertiary">
+            {isExpanded ? (
+              <ChevronDown className="w-3.5 h-3.5 text-cobalt-600" aria-hidden="true" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            )}
+          </div>
         </div>
       </button>
 
-      {/* ── Expanded code snippet */}
+      {/* ── Expanded Code Editor Surface (Dark Charcoal) */}
       {isExpanded && source.content && (
         <div className="border-t border-stone-200 animate-fade-in">
 
-          {/* Snippet toolbar */}
-          <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-200">
-            <span className="text-2xs font-mono text-ink-tertiary">
-              {lines.length} lines · Exact source chunk
+          {/* Subheader Toolbar */}
+          <div className="flex items-center justify-between px-4 py-2 bg-charcoal-850 border-b border-charcoal-750 text-stone-400">
+            <span className="text-3xs font-mono">
+              Cosine Score: {rawScore} · Exact Source Code Chunk
             </span>
             <button
               type="button"
               onClick={handleCopySnippet}
-              className="flex items-center gap-1.5 text-2xs text-ink-tertiary hover:text-ink transition-colors px-2 py-1 rounded-md hover:bg-stone-100"
-              aria-label={copied ? 'Snippet copied' : 'Copy snippet'}
+              className="flex items-center gap-1.5 text-3xs font-mono text-stone-300 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-charcoal-700"
+              aria-label={copied ? 'Code snippet copied' : 'Copy chunk snippet'}
             >
               {copied ? (
-                <><Check className="w-3 h-3 text-success" /><span className="text-success">Copied</span></>
+                <><Check className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">Copied</span></>
               ) : (
-                <><Copy className="w-3 h-3" /><span>Copy</span></>
+                <><Copy className="w-3 h-3" /><span>Copy Snippet</span></>
               )}
             </button>
           </div>
 
-          {/* Code viewer (dark) */}
-          <div className="bg-charcoal-900 overflow-x-auto max-h-80">
+          {/* Dark Charcoal Code Inspector */}
+          <div className="bg-charcoal-900 overflow-x-auto max-h-96">
             <table className="min-w-full text-left border-collapse" role="presentation">
               <tbody>
                 {lines.map((line, idx) => (
                   <tr
                     key={idx}
-                    className="hover:bg-charcoal-800/50 transition-colors"
+                    className="hover:bg-charcoal-800/60 transition-colors"
                   >
                     <td
-                      className="code-line-num select-none py-px align-top text-2xs font-mono sticky left-0 bg-charcoal-900 pr-3"
+                      className="code-line-num select-none py-0.5 align-top text-3xs font-mono sticky left-0 bg-charcoal-900"
                       aria-hidden="true"
                     >
                       {idx + 1}
                     </td>
-                    <td className="code-content py-px align-top pr-4 text-xs font-mono whitespace-pre leading-5">
+                    <td className="code-content py-0.5 align-top pr-4 text-xs font-mono whitespace-pre leading-5">
                       {line || '\u00A0'}
                     </td>
                   </tr>
@@ -186,11 +191,11 @@ export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository
             </table>
           </div>
 
-          {/* Mobile score */}
-          <div className="flex sm:hidden items-center justify-between px-4 py-2.5 bg-stone-50 border-t border-stone-200">
-            <span className="meta-label">Cosine Similarity</span>
-            <span className={`text-xs font-mono font-semibold ${scoreColor}`}>
-              {scoreDisplay}%
+          {/* Mobile Cosine Metric Display */}
+          <div className="flex sm:hidden items-center justify-between px-4 py-2.5 bg-stone-50 border-t border-stone-200 font-mono">
+            <span className="text-3xs uppercase tracking-wider text-ink-tertiary">Cosine Match</span>
+            <span className={`text-xs font-semibold ${scoreColor}`}>
+              {scoreDisplay}% ({rawScore})
             </span>
           </div>
 

@@ -36,13 +36,13 @@
   }
 
   ::selection {
-    background-color: rgba(21, 112, 239, 0.15);
-    color: #1570EF;
+    background-color: rgba(21, 112, 239, 0.20);
+    color: #1054C8;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
   }
 }
 
@@ -52,28 +52,43 @@
 ::-webkit-scrollbar-thumb { background: #D8D6D0; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #BAB8B0; }
 
-/* ─── Custom Components ──────────────────────────────────────────────────────── */
+/* ─── Custom Components & Editorial Utilities ────────────────────────────────── */
 @layer components {
 
   /* Typography scale */
+  .text-hero-headline {
+    @apply text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-[1.02];
+  }
   .text-display-xl {
     @apply text-5xl sm:text-6xl font-bold tracking-tighter leading-[1.05];
   }
   .text-display-lg {
-    @apply text-4xl sm:text-5xl font-bold tracking-tighter leading-[1.08];
+    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter leading-[1.08];
   }
   .text-display-md {
-    @apply text-3xl sm:text-4xl font-bold tracking-tight leading-[1.1];
+    @apply text-2xl sm:text-3xl font-bold tracking-tight leading-[1.15];
   }
 
-  /* Subtle texture overlay for the canvas */
+  /* Subtle texture overlay for the warm canvas */
   .canvas-texture {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAFAF8'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%231A1917' opacity='0.018'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAFAF8'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%231A1917' opacity='0.015'/%3E%3C/svg%3E");
   }
 
-  /* Ink divider line */
-  .divider {
-    @apply border-t border-stone-200;
+  /* Dark cinematic atmosphere mesh background */
+  .hero-atmosphere {
+    background-color: #111110;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(21, 112, 239, 0.18), transparent 70%),
+      radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02), transparent 40%),
+      linear-gradient(to bottom, #111110 0%, #161615 60%, #111110 100%);
+  }
+
+  /* Micro technical grid pattern on dark surfaces */
+  .dark-technical-grid {
+    background-size: 32px 32px;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   }
 
   /* Primary CTA button */
@@ -83,45 +98,46 @@
            hover:bg-cobalt-600 active:bg-cobalt-700
            shadow-cobalt-sm hover:shadow-cobalt
            transition-all duration-200
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-400 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal-900
            disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none;
   }
 
-  /* Ghost button */
+  /* Ghost button for light surfaces */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
-           text-sm font-medium text-ink-secondary
-           hover:bg-stone-100 hover:text-ink
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg
+           text-xs sm:text-sm font-medium text-ink-secondary
+           hover:bg-stone-200/60 hover:text-ink
            transition-all duration-150
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30;
   }
 
-  /* Chip / badge */
+  /* Ghost button for dark cinematic surfaces */
+  .btn-ghost-dark {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg
+           text-xs sm:text-sm font-medium text-stone-300
+           hover:bg-charcoal-800 hover:text-white
+           transition-all duration-150
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-400/40;
+  }
+
+  /* Editorial chips */
   .chip {
-    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full
            text-xs font-medium border border-stone-300
            bg-white text-ink-secondary;
   }
-
-  /* Card surface */
-  .card {
-    @apply bg-white rounded-2xl border border-stone-200 shadow-subtle;
-  }
-  .card-lifted {
-    @apply bg-white rounded-2xl border border-stone-200 shadow-lifted;
+  .chip-dark {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full
+           text-2xs font-mono border border-charcoal-700
+           bg-charcoal-850 text-stone-300;
   }
 
   /* Monospace metadata label */
   .meta-label {
     @apply text-2xs font-mono font-medium uppercase tracking-widest text-ink-tertiary;
   }
-
-  /* Input field */
-  .input-field {
-    @apply w-full bg-white border border-stone-300 rounded-xl px-4 py-3
-           text-sm text-ink placeholder:text-ink-placeholder
-           focus:outline-none focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-500/20
-           transition-all duration-150 shadow-inner-subtle;
+  .meta-label-dark {
+    @apply text-2xs font-mono font-medium uppercase tracking-widest text-stone-400;
   }
 
   /* Code snippet container */
@@ -148,53 +164,26 @@
 }
 
 /* ─── Hero product visualization decorations ─────────────────────────────────── */
-.hero-viz-glow {
-  position: absolute;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(21, 112, 239, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+.hero-glow-cobalt {
+  background: radial-gradient(circle, rgba(21, 112, 239, 0.15) 0%, transparent 70%);
 }
 
 /* Subtle section separator with gradient fade */
 .section-separator {
   height: 1px;
-  background: linear-gradient(to right, transparent, #D8D6D0 20%, #D8D6D0 80%, transparent);
+  background: linear-gradient(to right, transparent, #D8D6D0 15%, #D8D6D0 85%, transparent);
 }
 
-/* Connecting thread line (hero visualization) */
-.evidence-thread {
-  position: absolute;
-  width: 2px;
-  background: linear-gradient(to bottom, rgba(21, 112, 239, 0.4), rgba(21, 112, 239, 0.1));
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/* Shimmer placeholder */
-.shimmer-bg {
-  background: linear-gradient(90deg, #F4F3EF 25%, #EDECEA 50%, #F4F3EF 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-/* Dark section — used for contrast CTA */
-.dark-section {
-  background-color: #111110;
-  color: #F4F3EF;
-}
-
-/* Focus ring override for dark section buttons */
-.dark-section .btn-primary {
-  @apply focus-visible:ring-offset-charcoal-900;
+.section-separator-dark {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08) 15%, rgba(255, 255, 255, 0.08) 85%, transparent);
 }
 
 /* Syntax-highlighted code coloring (charcoal background) */
 .code-line-num {
-  color: #48474A;
+  color: #5A5850;
   user-select: none;
-  min-width: 2rem;
+  min-width: 2.25rem;
   text-align: right;
   padding-right: 1rem;
 }
@@ -211,31 +200,29 @@
 .answer-prose {
   @apply text-sm leading-relaxed text-ink-secondary;
 }
-.answer-prose h1,
-.answer-prose h2,
-.answer-prose h3 {
-  @apply text-ink font-semibold mt-5 mb-2;
-}
-.answer-prose p { @apply my-2; }
-.answer-prose ul, .answer-prose ol { @apply pl-5 my-2 space-y-1; }
-.answer-prose li { @apply text-ink-secondary; }
+.answer-prose h1 { @apply text-xl font-bold text-ink mt-6 mb-3 tracking-tight; }
+.answer-prose h2 { @apply text-lg font-bold text-ink mt-5 mb-2.5 tracking-tight; }
+.answer-prose h3 { @apply text-base font-semibold text-ink mt-4 mb-2; }
+.answer-prose p { @apply my-2.5 leading-relaxed; }
+.answer-prose ul, .answer-prose ol { @apply pl-5 my-3 space-y-1.5; }
+.answer-prose li { @apply text-ink-secondary leading-relaxed; }
 .answer-prose strong { @apply text-ink font-semibold; }
-.answer-prose a { @apply text-cobalt-500 hover:underline; }
+.answer-prose a { @apply text-cobalt-600 hover:text-cobalt-700 underline font-medium; }
 .answer-prose code {
   @apply px-1.5 py-0.5 rounded-md bg-stone-100 border border-stone-200
          text-cobalt-700 font-mono text-xs;
 }
 .answer-prose table {
-  @apply w-full border-collapse text-sm my-3;
+  @apply w-full border-collapse text-xs my-4;
 }
 .answer-prose th {
-  @apply p-2 text-left font-semibold text-ink bg-stone-100 border-b border-stone-200;
+  @apply p-2.5 text-left font-semibold text-ink bg-stone-100 border-b border-stone-200;
 }
 .answer-prose td {
-  @apply p-2 text-ink-secondary border-b border-stone-100;
+  @apply p-2.5 text-ink-secondary border-b border-stone-200;
 }
 .answer-prose blockquote {
-  @apply border-l-4 border-cobalt-300 pl-4 my-3 text-ink-tertiary italic;
+  @apply border-l-2 border-cobalt-400 pl-4 my-3 text-ink-tertiary italic;
 }
 
 /* Reduced motion */

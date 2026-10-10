@@ -70,10 +70,13 @@ export default {
           text: '#991B1B',
         },
 
-        // Dark section accent (used sparingly)
+        // Cinematic charcoal scale for dark atmospheric surfaces & code blocks
         charcoal: {
-          900: '#111110',
+          950: '#0B0B0A',
+          900: '#111110', // primary dark background
+          850: '#161615',
           800: '#1C1C1A',
+          750: '#232321',
           700: '#282826',
           600: '#363633',
           500: '#48474A',
@@ -88,6 +91,7 @@ export default {
 
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px' }],
+        '3xs': ['9px', { lineHeight: '12px' }],
       },
 
       letterSpacing: {
@@ -100,6 +104,7 @@ export default {
       },
 
       borderRadius: {
+        '3xl': '1.5rem',
         '4xl': '2rem',
       },
 
@@ -108,9 +113,11 @@ export default {
         'lifted': '0 4px 12px rgba(26, 25, 23, 0.08), 0 2px 4px rgba(26, 25, 23, 0.04)',
         'floated': '0 8px 24px rgba(26, 25, 23, 0.10), 0 4px 8px rgba(26, 25, 23, 0.05)',
         'deep': '0 20px 48px rgba(26, 25, 23, 0.14), 0 8px 16px rgba(26, 25, 23, 0.08)',
-        'cobalt-sm': '0 2px 8px rgba(21, 112, 239, 0.18)',
-        'cobalt': '0 4px 16px rgba(21, 112, 239, 0.24)',
+        'cobalt-sm': '0 2px 8px rgba(21, 112, 239, 0.20)',
+        'cobalt': '0 4px 20px rgba(21, 112, 239, 0.30)',
+        'cobalt-glow': '0 0 32px rgba(21, 112, 239, 0.18)',
         'inner-subtle': 'inset 0 1px 2px rgba(26, 25, 23, 0.04)',
+        'dark-lifted': '0 8px 32px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(255, 255, 255, 0.05) inset',
       },
 
       animation: {
@@ -129,16 +136,16 @@ export default {
           '100%': { opacity: '1' },
         },
         fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-4px)' },
+          '0%': { opacity: '0', transform: 'translateY(-6px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         pulseDot: {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-          '50%': { opacity: '0.5', transform: 'scale(0.85)' },
+          '50%': { opacity: '0.4', transform: 'scale(0.85)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },

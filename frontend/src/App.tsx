@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { RepositoryInput } from './components/RepositoryInput';
 import { AnalysisProgress } from './components/AnalysisProgress';
 import { RepositoryOverview } from './components/RepositoryOverview';
 import { SuggestedQuestions } from './components/SuggestedQuestions';
@@ -114,73 +113,56 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-canvas canvas-texture text-ink flex flex-col selection:bg-cobalt-100 selection:text-cobalt-700">
 
-      {/* ── Header (passes logo-click → reset to landing) */}
+      {/* ── Persistent Adaptive Header */}
       <Header
         backendConnected={backendConnected}
         onLogoClick={view === 'workspace' || view === 'indexing' ? handleResetRepo : undefined}
+        variant={view === 'landing' ? 'dark' : 'light'}
       />
 
-      {/* ── Main content ─────────────────────────────────────────────────────── */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      {/* ── Main Content Area */}
+      <main className="flex-1 w-full">
 
-        {/* ═══ VIEW: Landing ═══ */}
+        {/* ═══ VIEW: Landing Page ═══ */}
         {view === 'landing' && (
-          <div className="space-y-8 animate-fade-up">
-            <Hero />
-
-            {/* Divider */}
-            <div className="section-separator" />
-
-            {/* Input zone */}
-            <section aria-labelledby="start-heading">
-              <div className="text-center space-y-2 mb-8">
-                <h2 id="start-heading" className="text-2xl font-bold text-ink tracking-tight">
-                  Start exploring
-                </h2>
-                <p className="text-sm text-ink-tertiary">
-                  Paste any public GitHub repository URL to begin.
-                </p>
-              </div>
-              <RepositoryInput
-                onIndex={handleIndexRepository}
-                isLoading={isIndexing}
-                error={indexError}
-              />
-            </section>
-
+          <div className="w-full animate-fade-in">
+            <Hero
+              onIndex={handleIndexRepository}
+              isLoading={isIndexing}
+              error={indexError}
+            />
           </div>
         )}
 
-        {/* ═══ VIEW: Indexing ═══ */}
+        {/* ═══ VIEW: Indexing Progress ═══ */}
         {view === 'indexing' && (
-          <div className="py-8 animate-fade-up">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 animate-fade-up">
             <AnalysisProgress repositoryUrl={activeRepoUrl} />
           </div>
         )}
 
-        {/* ═══ VIEW: Workspace ═══ */}
+        {/* ═══ VIEW: Research & Intelligence Workspace ═══ */}
         {view === 'workspace' && indexedRepo && (
-          <div className="space-y-6 animate-fade-up">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fade-up">
 
-            {/* Repository identity bar */}
+            {/* Editorial Masthead & Telemetry */}
             <RepositoryOverview
               data={indexedRepo}
               onReset={handleResetRepo}
             />
 
-            {/* ── Research zone ─────────────────────────────────────────── */}
-            <section aria-label="Research workspace" className="space-y-5">
+            {/* Research Workspace Surface */}
+            <section aria-label="Codebase research console" className="space-y-8">
 
-              {/* Suggested questions */}
+              {/* Research Inquiries Dock */}
               <SuggestedQuestions
                 onSelectQuestion={handleSelectSuggestedQuestion}
                 disabled={isQuerying}
               />
 
-              {/* Divider */}
               <div className="section-separator" />
 
-              {/* Question composer */}
+              {/* Research Query Composer */}
               <QuestionInput
                 onAsk={handleAskQuestion}
                 isLoading={isQuerying}
@@ -191,15 +173,16 @@ export const App: React.FC = () => {
                 onQuestionChange={setQuestionValue}
               />
 
-              {/* Answer + Evidence (shown after first query) */}
+              {/* Synthesized Analysis & Verified Sources */}
               {queryResult && (
-                <div className="space-y-5 pt-2">
+                <div className="space-y-8 pt-4">
                   <AnswerPanel
                     answer={queryResult.answer}
                     question={queryResult.question}
                     repository={queryResult.repository}
                     sourcesCount={queryResult.sources.length}
                   />
+
                   <SourcesPanel
                     sources={queryResult.sources}
                     repository={queryResult.repository}
@@ -214,7 +197,7 @@ export const App: React.FC = () => {
 
       </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────────────── */}
+      {/* ── Editorial Footer ─────────────────────────────────────────────────── */}
       <Footer />
 
     </div>
