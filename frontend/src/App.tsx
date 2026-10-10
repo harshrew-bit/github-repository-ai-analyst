@@ -11,10 +11,13 @@ import { SourcesPanel } from './components/SourcesPanel';
 import { Footer } from './components/Footer';
 import { api } from './services/api';
 import { IndexResponse, QueryResponse } from './types/api';
-import { Database, ShieldCheck, Cpu } from 'lucide-react';
+
+type AppView = 'landing' | 'indexing' | 'workspace';
 
 export const App: React.FC = () => {
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null);
+  const [view, setView] = useState<AppView>('landing');
+
   const [indexedRepo, setIndexedRepo] = useState<IndexResponse | null>(null);
   const [activeRepoUrl, setActiveRepoUrl] = useState<string>('');
   const [isIndexing, setIsIndexing] = useState<boolean>(false);
@@ -26,78 +29,68 @@ export const App: React.FC = () => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [queryResult, setQueryResult] = useState<QueryResponse | null>(null);
 
-  // Poll backend health check on mount and interval
+  // ── Health check polling ──────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
-    const checkBackend = async () => {
+    const check = async () => {
       try {
         const res = await api.checkHealth();
-        if (isMounted) {
-          setBackendConnected(res.status === 'ok');
-        }
+        if (isMounted) setBackendConnected(res.status === 'ok');
       } catch {
-        if (isMounted) {
-          setBackendConnected(false);
-        }
+        if (isMounted) setBackendConnected(false);
       }
     };
-
-    checkBackend();
-    const interval = setInterval(checkBackend, 15000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    check();
+    const interval = setInterval(check, 15_000);
+    return () => { isMounted = false; clearInterval(interval); };
   }, []);
 
-  // Handle repository analysis & indexing
+  // ── Sync view state ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isIndexing) {
+      setView('indexing');
+    } else if (indexedRepo) {
+      setView('workspace');
+    } else {
+      setView('landing');
+    }
+  }, [isIndexing, indexedRepo]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleIndexRepository = async (url: string) => {
     setIsIndexing(true);
     setIndexError(null);
     setQueryResult(null);
     setActiveRepoUrl(url);
+    setQuestionValue('');
 
     try {
       const response = await api.indexRepository(url);
       setIndexedRepo(response);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setIndexError(err.message);
-      } else {
-        setIndexError('Failed to analyze repository.');
-      }
+      setIndexError(err instanceof Error ? err.message : 'Failed to analyze repository.');
       setIndexedRepo(null);
     } finally {
       setIsIndexing(false);
     }
   };
 
-  // Handle asking questions
   const handleAskQuestion = async (question: string, topK: number) => {
     if (!activeRepoUrl) {
       setQueryError('Please analyze and index a repository first.');
       return;
     }
-
     setIsQuerying(true);
     setLoadingStep('searching');
     setQueryError(null);
 
     try {
-      // Meaningful state progression for query UX
-      const stepTimer = setTimeout(() => {
-        setLoadingStep('generating');
-      }, 600);
-
+      const stepTimer = setTimeout(() => setLoadingStep('generating'), 600);
       const response = await api.queryRepository(activeRepoUrl, question, topK);
       clearTimeout(stepTimer);
       setQueryResult(response);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setQueryError(err.message);
-      } else {
-        setQueryError('Failed to query codebase context.');
-      }
+      setQueryError(err instanceof Error ? err.message : 'Failed to query codebase context.');
     } finally {
       setIsQuerying(false);
       setLoadingStep(null);
@@ -119,18 +112,35 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 flex flex-col font-sans bg-radial-glow bg-grid-pattern selection:bg-brand-500/30 selection:text-white">
-      {/* Sticky Top Header */}
-      <Header backendConnected={backendConnected} />
+    <div className="min-h-screen bg-canvas canvas-texture text-ink flex flex-col selection:bg-cobalt-100 selection:text-cobalt-700">
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* State 1: No repository active and not indexing */}
-        {!indexedRepo && !isIndexing && (
-          <div className="space-y-6 animate-fade-in">
+      {/* ── Header (passes logo-click → reset to landing) */}
+      <Header
+        backendConnected={backendConnected}
+        onLogoClick={view === 'workspace' || view === 'indexing' ? handleResetRepo : undefined}
+      />
+
+      {/* ── Main content ─────────────────────────────────────────────────────── */}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        {/* ═══ VIEW: Landing ═══ */}
+        {view === 'landing' && (
+          <div className="space-y-8 animate-fade-up">
             <Hero />
 
-            <section>
+            {/* Divider */}
+            <div className="section-separator" />
+
+            {/* Input zone */}
+            <section aria-labelledby="start-heading">
+              <div className="text-center space-y-2 mb-8">
+                <h2 id="start-heading" className="text-2xl font-bold text-ink tracking-tight">
+                  Start exploring
+                </h2>
+                <p className="text-sm text-ink-tertiary">
+                  Paste any public GitHub repository URL to begin.
+                </p>
+              </div>
               <RepositoryInput
                 onIndex={handleIndexRepository}
                 isLoading={isIndexing}
@@ -138,103 +148,77 @@ export const App: React.FC = () => {
               />
             </section>
 
-            {/* Architecture Highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-6 border-t border-surface-border">
-              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-sky-400">
-                  <Database className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-semibold text-white font-mono">
-                  ChromaDB Collections
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Deterministic vector collections per repository with idempotent caching to prevent redundant re-embedding.
-                </p>
-              </div>
-
-              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-emerald-400">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-semibold text-white font-mono">
-                  Source Evidence Grounding
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Inspect exact code chunks, file paths, and cosine similarity metrics behind every synthesized answer.
-                </p>
-              </div>
-
-              <div className="bg-surface-100 p-4 rounded-xl border border-surface-border space-y-2 hover:border-slate-700 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-surface-50 border border-surface-border flex items-center justify-center text-brand-400">
-                  <Cpu className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-semibold text-white font-mono">
-                  Gemini Generation
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Zero hallucination reasoning strictly constrained to retrieved AST and documentation context.
-                </p>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* State 2: Actively Indexing Pipeline */}
-        {isIndexing && (
-          <section className="py-4">
+        {/* ═══ VIEW: Indexing ═══ */}
+        {view === 'indexing' && (
+          <div className="py-8 animate-fade-up">
             <AnalysisProgress repositoryUrl={activeRepoUrl} />
-          </section>
+          </div>
         )}
 
-        {/* State 3: Repository Indexed & Ready */}
-        {indexedRepo && !isIndexing && (
-          <div className="space-y-5 animate-fade-in">
-            {/* Repository Telemetry Bar */}
+        {/* ═══ VIEW: Workspace ═══ */}
+        {view === 'workspace' && indexedRepo && (
+          <div className="space-y-6 animate-fade-up">
+
+            {/* Repository identity bar */}
             <RepositoryOverview
               data={indexedRepo}
               onReset={handleResetRepo}
             />
 
-            {/* Suggested Question Chips */}
-            <SuggestedQuestions
-              onSelectQuestion={handleSelectSuggestedQuestion}
-              disabled={isQuerying}
-            />
+            {/* ── Research zone ─────────────────────────────────────────── */}
+            <section aria-label="Research workspace" className="space-y-5">
 
-            {/* Query Input Panel */}
-            <QuestionInput
-              onAsk={handleAskQuestion}
-              isLoading={isQuerying}
-              loadingStep={loadingStep}
-              error={queryError}
-              repositoryName={indexedRepo.repository}
-              questionValue={questionValue}
-              onQuestionChange={setQuestionValue}
-            />
+              {/* Suggested questions */}
+              <SuggestedQuestions
+                onSelectQuestion={handleSelectSuggestedQuestion}
+                disabled={isQuerying}
+              />
 
-            {/* AI Answer & Source Evidence */}
-            {queryResult && (
-              <section className="space-y-5 pt-2">
-                <AnswerPanel
-                  answer={queryResult.answer}
-                  question={queryResult.question}
-                  repository={queryResult.repository}
-                  sourcesCount={queryResult.sources.length}
-                />
+              {/* Divider */}
+              <div className="section-separator" />
 
-                <SourcesPanel
-                  sources={queryResult.sources}
-                  repository={queryResult.repository}
-                />
-              </section>
-            )}
+              {/* Question composer */}
+              <QuestionInput
+                onAsk={handleAskQuestion}
+                isLoading={isQuerying}
+                loadingStep={loadingStep}
+                error={queryError}
+                repositoryName={indexedRepo.repository}
+                questionValue={questionValue}
+                onQuestionChange={setQuestionValue}
+              />
+
+              {/* Answer + Evidence (shown after first query) */}
+              {queryResult && (
+                <div className="space-y-5 pt-2">
+                  <AnswerPanel
+                    answer={queryResult.answer}
+                    question={queryResult.question}
+                    repository={queryResult.repository}
+                    sourcesCount={queryResult.sources.length}
+                  />
+                  <SourcesPanel
+                    sources={queryResult.sources}
+                    repository={queryResult.repository}
+                  />
+                </div>
+              )}
+
+            </section>
+
           </div>
         )}
+
       </main>
 
-      {/* Footer */}
+      {/* ── Footer ────────────────────────────────────────────────────────────── */}
       <Footer />
+
     </div>
   );
 };
+
 export default App;

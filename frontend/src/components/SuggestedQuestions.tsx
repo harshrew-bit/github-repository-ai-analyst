@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Terminal, Shield, Workflow, Layers, ArrowUpRight } from 'lucide-react';
+import { Layers, Workflow, Shield, Terminal, ArrowUpRight } from 'lucide-react';
 
 interface SuggestedQuestionsProps {
   onSelectQuestion: (question: string) => void;
@@ -29,7 +29,7 @@ const SUGGESTIONS: Suggestion[] = [
     icon: Shield,
   },
   {
-    category: 'Reliability',
+    category: 'Error Handling',
     question: 'How are exceptions, HTTP errors, and request retries handled?',
     icon: Terminal,
   },
@@ -40,11 +40,10 @@ export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="space-y-2 pt-1">
-      <div className="flex items-center space-x-1.5 text-xs text-slate-400">
-        <Sparkles className="w-3.5 h-3.5 text-brand-400" />
-        <span className="font-medium text-slate-300">Suggested Codebase Inquiries:</span>
-      </div>
+    <div className="space-y-3">
+      <p className="text-xs font-medium text-ink-tertiary uppercase tracking-widest">
+        Research prompts
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {SUGGESTIONS.map((item, idx) => {
@@ -55,22 +54,26 @@ export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({
               type="button"
               onClick={() => onSelectQuestion(item.question)}
               disabled={disabled}
-              className="group text-left p-2.5 rounded-lg bg-surface-100 hover:bg-surface-200 border border-surface-border hover:border-brand-500/40 transition-all flex items-start justify-between space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group text-left p-3.5 rounded-xl bg-white border border-stone-200 hover:border-cobalt-300 hover:shadow-cobalt-sm transition-all duration-150 flex items-start justify-between gap-3 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30"
+              aria-label={`Ask: ${item.question}`}
             >
-              <div className="flex items-start space-x-2.5 min-w-0">
-                <div className="p-1 rounded bg-surface-50 text-slate-400 group-hover:text-brand-400 transition-colors flex-shrink-0 mt-0.5">
-                  <Icon className="w-3.5 h-3.5" />
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-200 group-hover:bg-cobalt-50 group-hover:border-cobalt-200 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors">
+                  <Icon className="w-3.5 h-3.5 text-ink-tertiary group-hover:text-cobalt-500 transition-colors" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] font-mono text-slate-500 block uppercase tracking-wider mb-0.5">
+                  <span className="meta-label block mb-1 group-hover:text-cobalt-500 transition-colors">
                     {item.category}
                   </span>
-                  <p className="text-xs text-slate-300 group-hover:text-white transition-colors line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-ink-secondary group-hover:text-ink leading-relaxed line-clamp-2 transition-colors">
                     {item.question}
                   </p>
                 </div>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-brand-400 flex-shrink-0 transition-colors mt-1" />
+              <ArrowUpRight
+                className="w-3.5 h-3.5 text-stone-300 group-hover:text-cobalt-400 flex-shrink-0 mt-0.5 transition-colors"
+                aria-hidden="true"
+              />
             </button>
           );
         })}

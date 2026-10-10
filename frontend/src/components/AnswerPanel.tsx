@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Sparkles, Copy, Check, ShieldCheck, Terminal } from 'lucide-react';
+import { Copy, Check, ShieldCheck, FileText } from 'lucide-react';
 
 interface AnswerPanelProps {
   answer: string;
@@ -15,9 +15,10 @@ interface CodeBlockProps {
   children?: React.ReactNode;
 }
 
+// ─── Code block with copy ─────────────────────────────────────────────────────
 const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, children, ...props }) => {
   const [copied, setCopied] = useState(false);
-  const match = /language-(\w+)/.exec(className || '');
+  const match = /language-(\w+)/.exec(className ?? '');
   const language = match ? match[1] : '';
   const codeContent = String(children).replace(/\n$/, '');
 
@@ -31,7 +32,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, children, ...p
   if (inline) {
     return (
       <code
-        className="px-1.5 py-0.5 rounded bg-surface-200 border border-surface-border text-brand-300 font-mono text-[12px]"
+        className="px-1.5 py-0.5 rounded-md bg-stone-100 border border-stone-200 text-cobalt-700 font-mono text-xs"
         {...props}
       >
         {children}
@@ -40,41 +41,34 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, children, ...p
   }
 
   return (
-    <div className="my-3 rounded-lg border border-surface-border bg-surface-50 overflow-hidden font-mono text-xs">
-      {/* Code Header Bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-surface-100 border-b border-surface-border text-[11px] text-slate-400">
-        <div className="flex items-center space-x-1.5">
-          <Terminal className="w-3 h-3 text-slate-500" />
-          <span className="font-mono text-slate-300 uppercase">{language || 'code'}</span>
-        </div>
+    <div className="my-3.5 rounded-xl overflow-hidden border border-charcoal-700 bg-charcoal-900">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 bg-charcoal-800 border-b border-charcoal-700">
+        <span className="text-2xs font-mono text-stone-400 uppercase tracking-widest">
+          {language || 'code'}
+        </span>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center space-x-1 text-slate-400 hover:text-white transition-colors"
-          title="Copy code snippet"
+          className="flex items-center gap-1.5 text-2xs text-stone-400 hover:text-stone-200 transition-colors"
+          aria-label={copied ? 'Copied' : 'Copy code'}
         >
           {copied ? (
-            <>
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400 text-[10px]">Copied</span>
-            </>
+            <><Check className="w-3 h-3 text-success" /><span className="text-success">Copied</span></>
           ) : (
-            <>
-              <Copy className="w-3 h-3" />
-              <span className="text-[10px]">Copy</span>
-            </>
+            <><Copy className="w-3 h-3" /><span>Copy</span></>
           )}
         </button>
       </div>
-
-      {/* Code Body */}
-      <pre className="p-3.5 overflow-x-auto text-slate-200 leading-relaxed">
-        <code>{children}</code>
+      {/* Body */}
+      <pre className="p-4 overflow-x-auto text-xs leading-relaxed" style={{ tabSize: 2 }}>
+        <code className="text-stone-200 font-mono">{children}</code>
       </pre>
     </div>
   );
 };
 
+// ─── Main answer panel ────────────────────────────────────────────────────────
 export const AnswerPanel: React.FC<AnswerPanelProps> = ({
   answer,
   question,
@@ -90,72 +84,64 @@ export const AnswerPanel: React.FC<AnswerPanelProps> = ({
   };
 
   return (
-    <div className="bg-surface-100 border border-surface-border rounded-xl p-5 sm:p-6 shadow-xl shadow-black/20 space-y-4 animate-fade-in">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-border pb-4">
-        <div className="flex items-start sm:items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 flex-shrink-0 mt-0.5 sm:mt-0">
-            <Sparkles className="w-4 h-4" />
+    <article className="card-lifted p-5 sm:p-6 space-y-4 animate-fade-up" aria-label="AI-generated answer">
+
+      {/* ── Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-stone-200">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-cobalt-50 border border-cobalt-200 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 text-cobalt-500" aria-hidden="true" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-semibold text-white tracking-tight">
-                Grounded Codebase Analysis
-              </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-200 text-slate-300 border border-surface-border">
-                Gemini &bull; Chroma RAG
+          <div className="min-w-0">
+            <div className="flex items-center flex-wrap gap-2">
+              <h3 className="text-sm font-semibold text-ink">Analysis</h3>
+              <span className="chip text-2xs">
+                Gemini · Chroma RAG
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-              Query: &ldquo;<span className="text-slate-300">{question}</span>&rdquo;
+            <p className="text-xs text-ink-tertiary mt-0.5 line-clamp-1" title={question}>
+              <span className="italic">&ldquo;{question}&rdquo;</span>
             </p>
           </div>
         </div>
 
-        {/* Copy Answer Action */}
+        {/* Copy answer */}
         <button
           type="button"
           onClick={handleCopyAnswer}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs bg-surface-200 hover:bg-surface-300 border border-surface-border text-slate-300 hover:text-white transition-colors self-start sm:self-auto"
-          title="Copy markdown answer"
+          className="btn-ghost text-xs self-start sm:self-auto"
+          aria-label={copiedAnswer ? 'Answer copied' : 'Copy answer as Markdown'}
         >
           {copiedAnswer ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 font-mono text-[11px]">Copied Answer</span>
-            </>
+            <><Check className="w-3.5 h-3.5 text-success" /><span className="text-success">Copied</span></>
           ) : (
-            <>
-              <Copy className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-mono text-[11px]">Copy Markdown</span>
-            </>
+            <><Copy className="w-3.5 h-3.5" /><span>Copy</span></>
           )}
         </button>
       </div>
 
-      {/* Markdown Body */}
-      <div className="prose prose-invert max-w-none text-sm text-slate-200 leading-relaxed space-y-3 prose-p:leading-relaxed prose-headings:text-white prose-headings:font-semibold prose-a:text-brand-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-5 prose-ol:pl-5 prose-li:my-1 prose-table:w-full prose-table:border-collapse prose-th:border-b prose-th:border-surface-border prose-th:p-2 prose-th:text-left prose-td:border-b prose-td:border-surface-border/50 prose-td:p-2">
+      {/* ── Markdown body */}
+      <div className="answer-prose">
         <ReactMarkdown
-          components={{
-            code: CodeBlock as any,
-          }}
+          components={{ code: CodeBlock as React.ComponentType<{inline?: boolean; className?: string; children?: React.ReactNode}> }}
         >
           {answer}
         </ReactMarkdown>
       </div>
 
-      {/* Grounding Footer Guarantee */}
-      <div className="pt-3 border-t border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 font-mono">
-        <div className="flex items-center space-x-1.5 text-emerald-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-          <span className="text-[11px]">
-            Strictly synthesized from {sourcesCount} verified repository chunks
+      {/* ── Grounding footer */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 border-t border-stone-200 text-xs">
+        <div className="flex items-center gap-1.5 text-success-text">
+          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>
+            Synthesized from{' '}
+            <strong className="font-semibold">{sourcesCount}</strong>{' '}
+            verified source chunk{sourcesCount !== 1 ? 's' : ''}
           </span>
         </div>
-        <span className="text-[11px] text-slate-500">
-          Target: {repository}
-        </span>
+        <span className="text-ink-tertiary font-mono text-2xs">{repository}</span>
       </div>
-    </div>
+
+    </article>
   );
 };

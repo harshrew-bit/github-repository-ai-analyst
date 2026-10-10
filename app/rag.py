@@ -8,12 +8,13 @@ class RAGPipeline:
     def __init__(
         self,
         chroma_directory,
-        collection_name
+        collection_name,
+        embedding_model=None
     ):
 
-        # Create the embedding model.
+        # Create or reuse the embedding model.
         # This is used only for embedding the user's question.
-        self.embedding_model = EmbeddingModel()
+        self.embedding_model = embedding_model or EmbeddingModel()
 
         # Create the retriever.
         # Chroma stores and searches the repository embeddings.

@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import {
-  FileCode,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  Check,
-  ExternalLink,
+  FileCode, ChevronDown, ChevronRight, Copy, Check, ExternalLink,
 } from 'lucide-react';
 import { SourceItem } from '../types/api';
 
@@ -15,11 +10,20 @@ interface SourceCardProps {
   repository?: string;
 }
 
-export const SourceCard: React.FC<SourceCardProps> = ({
-  source,
-  rank,
-  repository,
-}) => {
+const LANGUAGE_CHIP: Record<string, string> = {
+  python:     'bg-sky-50     text-sky-700     border-sky-200',
+  typescript: 'bg-amber-50   text-amber-700   border-amber-200',
+  javascript: 'bg-yellow-50  text-yellow-700  border-yellow-200',
+  go:         'bg-cyan-50    text-cyan-700    border-cyan-200',
+  rust:       'bg-orange-50  text-orange-700  border-orange-200',
+  markdown:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+};
+
+function getLanguageChip(lang?: string): string {
+  return LANGUAGE_CHIP[lang?.toLowerCase() ?? ''] ?? 'bg-stone-50 text-stone-600 border-stone-200';
+}
+
+export const SourceCard: React.FC<SourceCardProps> = ({ source, rank, repository }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -31,157 +35,168 @@ export const SourceCard: React.FC<SourceCardProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Format cosine score to clean percentage
-  const relevancePercent = Math.min(100, Math.max(0, source.score * 100)).toFixed(1);
+  // Cosine score as percent
+  const scorePercent = Math.min(100, Math.max(0, source.score * 100));
+  const scoreDisplay = scorePercent.toFixed(1);
 
-  // Language pill color badge
-  const getLanguageColor = (lang?: string) => {
-    switch (lang?.toLowerCase()) {
-      case 'python':
-        return 'text-sky-400 bg-sky-500/10 border-sky-500/20';
-      case 'typescript':
-      case 'javascript':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-      case 'go':
-        return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
-      case 'rust':
-        return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-      case 'markdown':
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-      default:
-        return 'text-slate-300 bg-surface-200 border-surface-border';
-    }
-  };
+  // Score color band
+  const scoreColor =
+    scorePercent >= 80 ? 'text-success'
+    : scorePercent >= 60 ? 'text-warning'
+    : 'text-ink-tertiary';
 
-  const lines = source.content ? source.content.split('\n') : [];
+  const lines = source.content?.split('\n') ?? [];
+  const fileUrl = repository
+    ? `https://github.com/${repository}/blob/HEAD/${source.file_path}`
+    : undefined;
 
   return (
-    <div className="bg-surface-100 border border-surface-border rounded-lg overflow-hidden transition-all hover:border-slate-600/80">
-      {/* Header bar */}
-      <div
+    <div className="rounded-xl border border-stone-200 bg-white overflow-hidden transition-all duration-150 hover:border-cobalt-200 hover:shadow-subtle">
+
+      {/* ── Header row (always visible) */}
+      <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="p-3 cursor-pointer flex items-center justify-between select-none bg-surface-100 hover:bg-surface-200/50 transition-colors"
+        className="w-full flex items-center justify-between p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500/30 focus-visible:rounded-t-xl"
+        aria-expanded={isExpanded}
+        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} source: ${source.file_path}`}
       >
-        {/* Left: Rank, file path, chunk */}
-        <div className="flex items-center space-x-3 min-w-0 pr-3">
-          <span className="text-[11px] font-mono font-semibold text-slate-500 w-5 flex-shrink-0">
+        {/* Left: rank + file */}
+        <div className="flex items-center gap-3 min-w-0 pr-4">
+
+          {/* Rank */}
+          <span
+            className="text-2xs font-mono font-bold text-cobalt-400 w-5 flex-shrink-0 text-center"
+            aria-hidden="true"
+          >
             #{rank}
           </span>
-          <div className="p-1.5 rounded-md bg-surface-50 border border-surface-border text-brand-400 flex-shrink-0">
-            <FileCode className="w-3.5 h-3.5" />
+
+          {/* File icon */}
+          <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-200 flex items-center justify-center flex-shrink-0">
+            <FileCode className="w-3.5 h-3.5 text-ink-tertiary" aria-hidden="true" />
           </div>
+
+          {/* Path + metadata */}
           <div className="min-w-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-mono font-medium text-white truncate block hover:text-brand-300">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-mono font-medium text-ink truncate block max-w-[16rem] sm:max-w-none">
                 {source.file_path}
               </span>
-              {repository && (
+              {fileUrl && (
                 <a
-                  href={`https://github.com/${repository}/blob/HEAD/${source.file_path}`}
+                  href={fileUrl}
                   target="_blank"
                   rel="noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-slate-500 hover:text-white transition-colors"
-                  title="View file on GitHub"
+                  className="text-ink-tertiary hover:text-cobalt-500 transition-colors flex-shrink-0"
+                  aria-label={`Open ${source.file_path} on GitHub`}
                 >
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </a>
               )}
             </div>
-            <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-400 mt-0.5">
-              <span>Chunk #{source.chunk_id}</span>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <span className="text-2xs font-mono text-ink-tertiary">
+                Chunk #{source.chunk_id}
+              </span>
               {source.language && (
-                <>
-                  <span>&bull;</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded border font-mono uppercase text-[9px] ${getLanguageColor(
-                      source.language
-                    )}`}
-                  >
-                    {source.language}
-                  </span>
-                </>
+                <span
+                  className={`text-2xs font-mono px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${getLanguageChip(source.language)}`}
+                >
+                  {source.language}
+                </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right: Relevance score & expand chevron */}
-        <div className="flex items-center space-x-3 flex-shrink-0">
-          <div className="text-right">
-            <span className="text-[10px] font-mono text-slate-500 block">
-              Cosine Match
-            </span>
-            <div className="flex items-center space-x-1.5 justify-end">
-              <div className="w-12 h-1.5 bg-surface-50 rounded-full overflow-hidden hidden sm:block">
+        {/* Right: score + chevron */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="text-right hidden sm:block">
+            <span className="meta-label block">Cosine</span>
+            <div className="flex items-center gap-2 justify-end mt-0.5">
+              {/* Score bar */}
+              <div className="w-14 h-1.5 bg-stone-100 rounded-full overflow-hidden" aria-hidden="true">
                 <div
-                  className="h-full bg-emerald-500 rounded-full"
-                  style={{ width: `${relevancePercent}%` }}
+                  className={`h-full rounded-full transition-all ${
+                    scorePercent >= 80 ? 'bg-success' : scorePercent >= 60 ? 'bg-warning' : 'bg-stone-400'
+                  }`}
+                  style={{ width: `${scorePercent}%` }}
                 />
               </div>
-              <span className="text-xs font-mono font-semibold text-emerald-400">
-                {relevancePercent}%
+              <span className={`text-xs font-mono font-semibold ${scoreColor}`}>
+                {scoreDisplay}%
               </span>
             </div>
           </div>
 
-          <div className="text-slate-400 p-1">
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-brand-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-slate-500" />
-            )}
-          </div>
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 text-cobalt-400" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-ink-tertiary" aria-hidden="true" />
+          )}
         </div>
-      </div>
+      </button>
 
-      {/* Expanded Code Snippet Viewer */}
+      {/* ── Expanded code snippet */}
       {isExpanded && source.content && (
-        <div className="border-t border-surface-border bg-surface-50 p-3 space-y-2 animate-fade-in font-mono text-xs">
-          {/* Action row */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400">
-            <span className="font-mono text-slate-400">
-              Lines: {lines.length} &bull; Exact Context Chunk
+        <div className="border-t border-stone-200 animate-fade-in">
+
+          {/* Snippet toolbar */}
+          <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-200">
+            <span className="text-2xs font-mono text-ink-tertiary">
+              {lines.length} lines · Exact source chunk
             </span>
             <button
               type="button"
               onClick={handleCopySnippet}
-              className="flex items-center space-x-1 px-2 py-1 rounded bg-surface-100 hover:bg-surface-200 border border-surface-border text-slate-300 hover:text-white transition-colors"
-              title="Copy snippet"
+              className="flex items-center gap-1.5 text-2xs text-ink-tertiary hover:text-ink transition-colors px-2 py-1 rounded-md hover:bg-stone-100"
+              aria-label={copied ? 'Snippet copied' : 'Copy snippet'}
             >
               {copied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400 text-[10px]">Copied</span>
-                </>
+                <><Check className="w-3 h-3 text-success" /><span className="text-success">Copied</span></>
               ) : (
-                <>
-                  <Copy className="w-3 h-3 text-slate-400" />
-                  <span className="text-[10px]">Copy Snippet</span>
-                </>
+                <><Copy className="w-3 h-3" /><span>Copy</span></>
               )}
             </button>
           </div>
 
-          {/* Syntax Code Container with Line Numbers */}
-          <div className="rounded-md border border-surface-border bg-background p-3 overflow-x-auto max-h-72">
-            <table className="w-full text-left border-collapse text-[11px] leading-relaxed">
+          {/* Code viewer (dark) */}
+          <div className="bg-charcoal-900 overflow-x-auto max-h-80">
+            <table className="min-w-full text-left border-collapse" role="presentation">
               <tbody>
                 {lines.map((line, idx) => (
-                  <tr key={idx} className="hover:bg-white/[0.02]">
-                    <td className="pr-3 select-none text-right font-mono text-slate-600 text-[10px] w-8 align-top">
+                  <tr
+                    key={idx}
+                    className="hover:bg-charcoal-800/50 transition-colors"
+                  >
+                    <td
+                      className="code-line-num select-none py-px align-top text-2xs font-mono sticky left-0 bg-charcoal-900 pr-3"
+                      aria-hidden="true"
+                    >
                       {idx + 1}
                     </td>
-                    <td className="text-slate-200 font-mono whitespace-pre font-normal align-top">
-                      {line}
+                    <td className="code-content py-px align-top pr-4 text-xs font-mono whitespace-pre leading-5">
+                      {line || '\u00A0'}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile score */}
+          <div className="flex sm:hidden items-center justify-between px-4 py-2.5 bg-stone-50 border-t border-stone-200">
+            <span className="meta-label">Cosine Similarity</span>
+            <span className={`text-xs font-mono font-semibold ${scoreColor}`}>
+              {scoreDisplay}%
+            </span>
+          </div>
+
         </div>
       )}
+
     </div>
   );
 };

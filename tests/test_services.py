@@ -135,3 +135,5 @@ def test_rag_service_successful_query(mock_rag_pipeline_cls, temp_chroma_dir):
     assert result["repository"] == "testorg/testrepo"
     assert result["answer"] == "This is a test answer."
     assert len(result["sources"]) == 1
+    assert mock_rag_pipeline_cls.call_args.kwargs.get("embedding_model") is not None
+    assert mock_rag_pipeline_cls.call_args.kwargs["embedding_model"].model_name == "gemini-embedding-2"

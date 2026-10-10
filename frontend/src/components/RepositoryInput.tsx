@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Loader2, Github, AlertCircle } from 'lucide-react';
+import { Github, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { RepositoryExample } from '../types/api';
 
 interface RepositoryInputProps {
@@ -19,22 +19,30 @@ const EXAMPLE_REPOS: RepositoryExample[] = [
   {
     name: 'tiangolo/fastapi',
     url: 'https://github.com/tiangolo/fastapi',
-    description: 'Modern high-performance web framework',
+    description: 'High-performance web framework',
     language: 'Python',
   },
   {
     name: 'pmndrs/zustand',
     url: 'https://github.com/pmndrs/zustand',
-    description: 'Bearbones state management',
+    description: 'Bear-minimum state management',
     language: 'TypeScript',
   },
   {
     name: 'pallets/flask',
     url: 'https://github.com/pallets/flask',
-    description: 'WSGI web application microframework',
+    description: 'WSGI micro-framework',
     language: 'Python',
   },
 ];
+
+const LANGUAGE_COLORS: Record<string, string> = {
+  Python:     'bg-sky-50     text-sky-700     border-sky-200',
+  TypeScript: 'bg-amber-50   text-amber-700   border-amber-200',
+  JavaScript: 'bg-yellow-50  text-yellow-700  border-yellow-200',
+  Go:         'bg-cyan-50    text-cyan-700    border-cyan-200',
+  Rust:       'bg-orange-50  text-orange-700  border-orange-200',
+};
 
 export const RepositoryInput: React.FC<RepositoryInputProps> = ({
   onIndex,
@@ -44,7 +52,6 @@ export const RepositoryInput: React.FC<RepositoryInputProps> = ({
 }) => {
   const [url, setUrl] = useState('');
 
-  // Real-time URL parsing to extract owner/repo for feedback
   const parsedRepo = useMemo(() => {
     if (!url.trim()) return null;
     const match = url.trim().match(/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/);
@@ -65,89 +72,132 @@ export const RepositoryInput: React.FC<RepositoryInputProps> = ({
     onIndex(exampleUrl);
   };
 
-  return (
-    <div className="w-full max-w-2xl mx-auto space-y-3">
-      {/* Command Card */}
-      <div className="bg-surface-100 border border-surface-border rounded-xl p-2.5 sm:p-3 shadow-lg shadow-black/20 focus-within:border-brand-500/50 focus-within:ring-1 focus-within:ring-brand-500/20 transition-all">
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {/* Input field with GitHub icon */}
-          <div className="relative flex-1 flex items-center">
-            <div className="absolute left-3 text-slate-400 pointer-events-none">
-              <Github className="w-4 h-4" />
-            </div>
-            <input
-              id="repository-url"
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="github.com/owner/repository"
-              disabled={isLoading || disabled}
-              className="w-full bg-surface-50 border border-surface-border rounded-lg pl-9 pr-24 sm:pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono transition-colors disabled:opacity-50"
-              autoComplete="off"
-              spellCheck="false"
-            />
-            {/* Visual detection tag */}
-            {parsedRepo && !isLoading && (
-              <div className="absolute right-2.5 hidden sm:flex items-center space-x-1 px-1.5 py-0.5 rounded bg-brand-500/10 border border-brand-500/30 text-[10px] font-mono text-brand-400">
-                <span>{parsedRepo.owner}/{parsedRepo.repo}</span>
-              </div>
-            )}
-          </div>
+  const isValid = !!parsedRepo;
+  const isEmpty = !url.trim();
 
-          {/* Action button */}
-          <button
-            type="submit"
-            disabled={!url.trim() || isLoading || disabled}
-            className="px-4 py-2 text-xs font-medium bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 flex-shrink-0 shadow-sm shadow-brand-500/25"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Analyzing Pipeline...</span>
-              </>
-            ) : (
-              <>
-                <Search className="w-3.5 h-3.5" />
-                <span>Analyze</span>
-                <kbd className="hidden sm:inline-block ml-1 px-1 py-0.2 bg-white/20 rounded text-[9px] font-mono">
-                  ↵
-                </kbd>
-              </>
-            )}
-          </button>
+  return (
+    <div className="w-full max-w-2xl mx-auto space-y-4">
+
+      {/* ── Input card */}
+      <div className={`bg-white rounded-2xl border shadow-lifted transition-all duration-200 ${
+        error
+          ? 'border-error/40 ring-2 ring-error/10'
+          : 'border-stone-200 focus-within:border-cobalt-400 focus-within:ring-2 focus-within:ring-cobalt-500/15'
+      }`}>
+
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-0">
+
+            {/* Input */}
+            <div className="relative flex-1 flex items-center">
+              <div className="absolute left-4 text-ink-tertiary pointer-events-none" aria-hidden="true">
+                <Github className="w-4 h-4" />
+              </div>
+              <input
+                id="repository-url"
+                type="url"
+                inputMode="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://github.com/owner/repository"
+                disabled={isLoading || disabled}
+                className="w-full bg-transparent pl-10 pr-4 py-4 text-sm text-ink placeholder:text-ink-placeholder font-mono focus:outline-none transition-colors disabled:opacity-50 rounded-l-2xl"
+                autoComplete="off"
+                spellCheck={false}
+                aria-label="GitHub repository URL"
+                aria-describedby={error ? 'repo-error' : parsedRepo ? 'repo-parsed' : undefined}
+              />
+
+              {/* Parsed repo tag */}
+              {parsedRepo && !isLoading && (
+                <div
+                  id="repo-parsed"
+                  className="absolute right-3 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-cobalt-50 border border-cobalt-200 text-2xs font-mono text-cobalt-600 flex-shrink-0"
+                  aria-live="polite"
+                >
+                  {parsedRepo.owner}/{parsedRepo.repo}
+                </div>
+              )}
+            </div>
+
+            {/* Divider (desktop) */}
+            <div className="hidden sm:block w-px self-stretch bg-stone-200 my-3" aria-hidden="true" />
+
+            {/* Submit button */}
+            <div className="px-3 py-3 sm:py-0 sm:flex sm:items-center">
+              <button
+                type="submit"
+                disabled={isEmpty || isLoading || disabled}
+                className="w-full sm:w-auto btn-primary text-sm px-5 py-2.5 rounded-xl flex-shrink-0"
+                aria-busy={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>Indexing…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Analyze Repository</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
         </form>
       </div>
 
-      {/* Suggested repository chips */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1 text-xs text-slate-400">
-        <span className="text-[11px] text-slate-500 mr-1 font-mono">Examples:</span>
-        {EXAMPLE_REPOS.map((item) => (
-          <button
-            key={item.name}
-            type="button"
-            onClick={() => handleQuickSelect(item.url)}
-            disabled={isLoading || disabled}
-            className="group flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-surface-100 hover:bg-surface-200 border border-surface-border hover:border-slate-600 text-slate-300 text-xs font-mono transition-colors disabled:opacity-50"
-            title={`${item.description} (${item.language})`}
-          >
-            <span>{item.name}</span>
-            <span className="text-[10px] text-slate-500 group-hover:text-slate-400 font-sans">
-              {item.language}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Error state */}
+      {/* ── Error */}
       {error && (
-        <div className="flex items-start space-x-2.5 text-xs text-rose-300 bg-rose-950/30 border border-rose-800/40 rounded-lg p-3 animate-fade-in">
-          <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-0.5">
-            <p className="font-semibold text-rose-200">Repository analysis failed</p>
-            <p className="text-rose-300/80 leading-relaxed">{error}</p>
+        <div
+          id="repo-error"
+          role="alert"
+          className="flex items-start gap-3 p-4 rounded-xl bg-error-light border border-error/20 animate-fade-up"
+        >
+          <AlertCircle className="w-4 h-4 text-error flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold text-error-text">Indexing failed</p>
+            <p className="text-xs text-error-text/80 leading-relaxed">{error}</p>
           </div>
         </div>
       )}
+
+      {/* ── Example repos */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="text-2xs text-ink-tertiary font-mono uppercase tracking-widest mr-1">
+          Try:
+        </span>
+        {EXAMPLE_REPOS.map((item) => {
+          const langClass = LANGUAGE_COLORS[item.language] ?? 'bg-stone-50 text-stone-600 border-stone-200';
+          return (
+            <button
+              key={item.name}
+              type="button"
+              onClick={() => handleQuickSelect(item.url)}
+              disabled={isLoading || disabled}
+              title={`${item.description}`}
+              className="group flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-stone-200 hover:border-cobalt-300 hover:bg-cobalt-50 text-xs text-ink-secondary hover:text-cobalt-700 font-mono transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle"
+              aria-label={`Analyze ${item.name} — ${item.description}`}
+            >
+              {item.name}
+              <span className={`text-2xs px-1.5 py-0.5 rounded-full border font-sans font-medium ${langClass}`}>
+                {item.language}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Hint */}
+      {!isValid && !isEmpty && (
+        <p role="alert" className="text-center text-xs text-ink-tertiary animate-fade-in">
+          Enter a full GitHub URL, e.g.{' '}
+          <span className="font-mono text-cobalt-600">github.com/owner/repo</span>
+        </p>
+      )}
+
     </div>
   );
 };

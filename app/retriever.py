@@ -12,10 +12,14 @@ class Retriever:
     ):
 
         self.embedding_model = embedding_model
+        model_name = getattr(embedding_model, "model_name", None)
+        dimensions = getattr(embedding_model, "dimensions", None)
 
         self.store = ChromaVectorStore(
             persist_directory=chroma_directory,
-            collection_name=collection_name
+            collection_name=collection_name,
+            embedding_model=model_name,
+            dimensions=dimensions
         )
 
         print(

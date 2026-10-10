@@ -13,14 +13,32 @@ def save_checkpoint(
     chunks,
     embeddings,
     output_file,
-    is_partial: bool = False
+    is_partial: bool = False,
+    embedding_model: str = None,
+    dimensions: int = None
 ):
+
+    active_model = (
+        embedding_model
+        or os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
+    ).removeprefix("models/").strip()
+
+    if dimensions is not None:
+        active_dims = dimensions
+    else:
+        raw_dims = os.getenv("GEMINI_EMBEDDING_DIMENSIONS", "3072")
+        try:
+            active_dims = int(raw_dims) if raw_dims else 3072
+        except ValueError:
+            active_dims = 3072
 
     data = {
         "repository": repository,
         "commit_sha": commit_sha,
         "file_map": file_map,
         "is_partial": is_partial,
+        "embedding_model": active_model,
+        "dimensions": active_dims,
         "embeddings": []
     }
 
@@ -52,12 +70,16 @@ def store_embeddings_in_chroma(
     chunks,
     embeddings,
     chroma_directory,
-    collection_name
+    collection_name,
+    embedding_model: str = None,
+    dimensions: int = None
 ):
 
     store = ChromaVectorStore(
         persist_directory=chroma_directory,
-        collection_name=collection_name
+        collection_name=collection_name,
+        embedding_model=embedding_model,
+        dimensions=dimensions
     )
 
     items = []
@@ -87,7 +109,9 @@ def store_embeddings_in_chroma(
 def restore_chroma_from_checkpoint(
     input_file,
     chroma_directory,
-    collection_name
+    collection_name,
+    expected_model: str = None,
+    dimensions: int = None
 ):
 
     data = load_embeddings(
@@ -95,6 +119,29 @@ def restore_chroma_from_checkpoint(
     )
 
     if data is None:
+        return False
+
+    active_model = (
+        expected_model
+        or os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
+    ).removeprefix("models/").strip()
+
+    checkpoint_model = data.get("embedding_model")
+    if checkpoint_model:
+        checkpoint_model = checkpoint_model.removeprefix("models/").strip()
+
+    if checkpoint_model and checkpoint_model != active_model:
+        print(
+            f"[Checkpoint] Skipping checkpoint with model '{checkpoint_model}' "
+            f"(expected '{active_model}')."
+        )
+        return False
+
+    if not checkpoint_model and active_model != "gemini-embedding-001":
+        print(
+            f"[Checkpoint] Skipping legacy checkpoint without embedding model metadata "
+            f"(expected '{active_model}')."
+        )
         return False
 
     embeddings_data = data.get(
@@ -107,7 +154,9 @@ def restore_chroma_from_checkpoint(
 
     store = ChromaVectorStore(
         persist_directory=chroma_directory,
-        collection_name=collection_name
+        collection_name=collection_name,
+        embedding_model=active_model,
+        dimensions=dimensions
     )
 
     items = []
@@ -466,26 +515,38 @@ def create_embedding_index(
 
                 existing_data = json.load(file)
 
-            existing_embeddings = (
-                existing_data.get(
-                    "embeddings",
-                    []
+            cp_model = existing_data.get("embedding_model")
+            model_match = (
+                cp_model == embedding_model.model_name
+                or (not cp_model and embedding_model.model_name == "gemini-embedding-001")
+            )
+
+            if model_match:
+                existing_embeddings = (
+                    existing_data.get(
+                        "embeddings",
+                        []
+                    )
                 )
-            )
 
-            all_embeddings = [
-                item["embedding"]
-                for item in existing_embeddings
-            ]
+                all_embeddings = [
+                    item["embedding"]
+                    for item in existing_embeddings
+                ]
 
-            start_index = len(
-                all_embeddings
-            )
+                start_index = len(
+                    all_embeddings
+                )
 
-            print(
-                f"Already embedded: "
-                f"{start_index}/{len(chunks)}"
-            )
+                print(
+                    f"Already embedded: "
+                    f"{start_index}/{len(chunks)}"
+                )
+            else:
+                print(
+                    f"Existing checkpoint uses model '{cp_model}' "
+                    f"(expected '{embedding_model.model_name}'). Starting fresh."
+                )
 
         else:
 

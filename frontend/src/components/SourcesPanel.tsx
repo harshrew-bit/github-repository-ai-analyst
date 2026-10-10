@@ -9,40 +9,35 @@ interface SourcesPanelProps {
 }
 
 export const SourcesPanel: React.FC<SourcesPanelProps> = ({ sources, repository }) => {
-  if (!sources || sources.length === 0) {
-    return null;
-  }
+  if (!sources || sources.length === 0) return null;
 
-  // Count unique files
   const uniqueFiles = new Set(sources.map((s) => s.file_path)).size;
 
   return (
-    <div className="bg-surface-100 border border-surface-border rounded-xl p-4 sm:p-5 shadow-xl shadow-black/20 space-y-3.5 animate-fade-in">
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-border pb-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400">
-            <FileCode className="w-4 h-4" />
+    <section aria-label="Source evidence" className="space-y-3 animate-fade-up">
+
+      {/* ── Section header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center">
+            <FileCode className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-white tracking-tight">
-              Source Evidence ({sources.length} Chunks across {uniqueFiles} {uniqueFiles === 1 ? 'File' : 'Files'})
-            </h4>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Ranked context passages retrieved from ChromaDB via vector similarity
+            <h4 className="text-sm font-semibold text-ink">Source Evidence</h4>
+            <p className="text-2xs text-ink-tertiary">
+              {sources.length} chunk{sources.length !== 1 ? 's' : ''} across{' '}
+              {uniqueFiles} file{uniqueFiles !== 1 ? 's' : ''} · ranked by cosine similarity
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 font-mono text-[11px] text-slate-400 self-start sm:self-auto">
-          <span className="px-2 py-0.5 rounded bg-surface-200 border border-surface-border">
-            Top-k: {sources.length}
-          </span>
-        </div>
+        <span className="chip text-2xs">
+          Top-{sources.length}
+        </span>
       </div>
 
-      {/* Sources List */}
-      <div className="space-y-2 pt-1">
+      {/* ── Source cards */}
+      <div className="space-y-2">
         {sources.map((source, idx) => (
           <SourceCard
             key={`${source.file_path}-${source.chunk_id}-${idx}`}
@@ -52,6 +47,13 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({ sources, repository 
           />
         ))}
       </div>
-    </div>
+
+      {/* ── Footer note */}
+      <p className="text-2xs text-ink-tertiary text-center pt-1">
+        Scores are cosine similarities between your query embedding and each retrieved chunk.
+        They indicate retrieval relevance, not answer confidence.
+      </p>
+
+    </section>
   );
 };

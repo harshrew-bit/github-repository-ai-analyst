@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, FileSearch, Code2, Cpu, Database, CheckCircle2, Loader2, Clock } from 'lucide-react';
+import {
+  GitBranch, FileSearch, Code2, Cpu, Database,
+  CheckCircle2, Loader2, Clock,
+} from 'lucide-react';
 
 interface AnalysisProgressProps {
   repositoryUrl: string;
@@ -16,31 +19,31 @@ const PIPELINE_STEPS: Step[] = [
   {
     id: 'connect',
     label: 'Connecting to GitHub API',
-    detail: 'Verifying repository access & default branch metadata',
+    detail: 'Verifying repository access and reading default branch metadata',
     icon: GitBranch,
   },
   {
     id: 'tree',
     label: 'Reading repository tree',
-    detail: 'Traversing recursive Git tree & filtering non-code assets',
+    detail: 'Traversing Git tree and filtering non-code assets',
     icon: FileSearch,
   },
   {
     id: 'parse',
     label: 'Parsing source files',
-    detail: 'Extracting text documents and chunking code boundaries',
+    detail: 'Extracting documents and chunking at code boundaries',
     icon: Code2,
   },
   {
     id: 'embed',
     label: 'Generating embeddings',
-    detail: 'Batch processing vector representations via Google Gemini',
+    detail: 'Batch processing vector representations via Gemini',
     icon: Cpu,
   },
   {
     id: 'index',
     label: 'Indexing into ChromaDB',
-    detail: 'Persisting HNSW cosine vector index to disk storage',
+    detail: 'Persisting HNSW cosine vector index',
     icon: Database,
   },
   {
@@ -51,17 +54,30 @@ const PIPELINE_STEPS: Step[] = [
   },
 ];
 
+function formatTime(sec: number) {
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s}s`;
+}
+
+// Extract owner/repo from URL for display
+function parseRepoName(url: string): string {
+  const match = url.match(/github\.com\/([^/]+\/[^/]+)/);
+  return match ? match[1].replace(/\.git$/, '') : url;
+}
+
 export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUrl }) => {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Dynamic step progression for request lifecycle feedback
+  const repoName = parseRepoName(repositoryUrl);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
 
-    // Progress through realistic timeframes during long-running embedding/indexing calls
     const stepIntervals = [
       setTimeout(() => setActiveStepIndex(1), 1200),
       setTimeout(() => setActiveStepIndex(2), 3000),
@@ -76,90 +92,129 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ repositoryUr
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-surface-100 border border-surface-border rounded-xl p-5 shadow-xl animate-fade-in space-y-4">
-      {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-surface-border pb-3">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
-          <span className="text-sm font-semibold text-white tracking-tight">
-            Indexing Repository Pipeline
-          </span>
+    <div className="w-full max-w-2xl mx-auto animate-fade-up" role="status" aria-live="polite" aria-label="Indexing progress">
+
+      {/* Header card */}
+      <div className="card-lifted p-5 sm:p-6 space-y-5">
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cobalt-50 border border-cobalt-200 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-cobalt-500 animate-spin" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink">Indexing Pipeline</p>
+              <p className="text-2xs text-ink-tertiary font-mono truncate max-w-[14rem] sm:max-w-xs">
+                {repoName}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-mono text-ink-tertiary">
+            <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+            <span aria-label={`${elapsedSeconds} seconds elapsed`}>{formatTime(elapsedSeconds)}</span>
+          </div>
         </div>
-        <div className="flex items-center space-x-1.5 text-xs font-mono text-slate-400">
-          <Clock className="w-3.5 h-3.5" />
-          <span>{elapsedSeconds}s elapsed</span>
-        </div>
-      </div>
 
-      {/* Target repo banner */}
-      <div className="px-3 py-2 rounded-lg bg-surface-50 border border-surface-border font-mono text-xs text-slate-300 truncate">
-        Target: <span className="text-brand-400 font-semibold">{repositoryUrl}</span>
-      </div>
-
-      {/* Pipeline Steps Tracker */}
-      <div className="space-y-2.5 pt-1">
-        {PIPELINE_STEPS.map((step, idx) => {
-          const Icon = step.icon;
-          const isComplete = idx < activeStepIndex;
-          const isCurrent = idx === activeStepIndex;
-
-          return (
+        {/* Progress bar */}
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
             <div
-              key={step.id}
-              className={`flex items-start space-x-3 p-2.5 rounded-lg border transition-all ${
-                isCurrent
-                  ? 'bg-surface-200 border-brand-500/40 shadow-sm shadow-brand-500/10'
-                  : isComplete
-                  ? 'bg-surface-50/50 border-surface-border text-slate-400'
-                  : 'border-transparent opacity-40'
-              }`}
-            >
-              {/* Step indicator */}
+              className="h-full rounded-full bg-cobalt-500 transition-all duration-700 ease-out"
+              style={{ width: `${Math.min(95, (activeStepIndex / (PIPELINE_STEPS.length - 1)) * 100)}%` }}
+              role="progressbar"
+              aria-valuenow={activeStepIndex}
+              aria-valuemin={0}
+              aria-valuemax={PIPELINE_STEPS.length - 1}
+            />
+          </div>
+          <div className="flex justify-between text-2xs font-mono text-ink-tertiary">
+            <span>Connecting</span>
+            <span>Ready</span>
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div className="space-y-1.5">
+          {PIPELINE_STEPS.map((step, idx) => {
+            const Icon = step.icon;
+            const isComplete = idx < activeStepIndex;
+            const isCurrent = idx === activeStepIndex;
+
+            return (
               <div
-                className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-mono transition-colors ${
-                  isComplete
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : isCurrent
-                    ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40'
-                    : 'bg-surface-50 text-slate-600 border border-surface-border'
+                key={step.id}
+                className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                  isCurrent
+                    ? 'bg-cobalt-50 border-cobalt-200'
+                    : isComplete
+                    ? 'bg-stone-50 border-stone-200'
+                    : 'bg-transparent border-transparent opacity-40'
                 }`}
               >
-                {isComplete ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                ) : isCurrent ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
-                ) : (
-                  <Icon className="w-3.5 h-3.5" />
-                )}
-              </div>
-
-              {/* Step details */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`text-xs font-medium tracking-tight ${
-                      isCurrent
-                        ? 'text-white font-semibold'
-                        : isComplete
-                        ? 'text-slate-300'
-                        : 'text-slate-500'
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                  {isCurrent && (
-                    <span className="text-[10px] font-mono text-brand-400 bg-brand-500/10 px-1.5 py-0.2 rounded border border-brand-500/20 animate-pulse">
-                      In progress
-                    </span>
+                {/* Indicator */}
+                <div
+                  className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                    isComplete
+                      ? 'bg-success-light border border-success/30'
+                      : isCurrent
+                      ? 'bg-cobalt-100 border border-cobalt-300'
+                      : 'bg-stone-100 border border-stone-200'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {isComplete ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                  ) : isCurrent ? (
+                    <Loader2 className="w-3.5 h-3.5 text-cobalt-500 animate-spin" />
+                  ) : (
+                    <Icon className="w-3.5 h-3.5 text-ink-tertiary" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-normal truncate">
-                  {step.detail}
-                </p>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-medium ${
+                        isCurrent
+                          ? 'text-cobalt-700 font-semibold'
+                          : isComplete
+                          ? 'text-ink-secondary'
+                          : 'text-ink-tertiary'
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                    {isCurrent && (
+                      <span className="text-2xs font-mono text-cobalt-600 bg-cobalt-100 px-1.5 py-0.5 rounded-md border border-cobalt-200 animate-pulse">
+                        Running
+                      </span>
+                    )}
+                    {isComplete && (
+                      <span className="text-2xs font-mono text-success-text">
+                        Done
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-2xs mt-0.5 leading-relaxed ${
+                    isCurrent ? 'text-cobalt-600' : 'text-ink-tertiary'
+                  }`}>
+                    {step.detail}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* Info note */}
+        <p className="text-xs text-ink-tertiary text-center pt-1">
+          Embedding generation may take 30–120 seconds depending on repository size.
+          <br />
+          Subsequent analyses of the same repository load from cache instantly.
+        </p>
+
       </div>
     </div>
   );

@@ -21,11 +21,15 @@ class GeminiQuotaExceededError(GeminiEmbeddingError):
 
 class EmbeddingModel:
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(
+        self,
+        model_name: Optional[str] = None,
+        dimensions: Optional[int] = None
+    ):
         self.gemini_client = GeminiClient()
 
-        # Configurable through GEMINI_EMBEDDING_MODEL, defaulting to gemini-embedding-001
-        raw_model = model_name or os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
+        # Configurable through GEMINI_EMBEDDING_MODEL, defaulting to gemini-embedding-2
+        raw_model = model_name or os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
         clean_model = raw_model.strip()
         if not clean_model.startswith("models/"):
             model_resource = f"models/{clean_model}"
@@ -35,6 +39,16 @@ class EmbeddingModel:
 
         self.model_name = clean_model
         self.model_resource = model_resource
+
+        # Configurable through GEMINI_EMBEDDING_DIMENSIONS, defaulting to 3072
+        if dimensions is not None:
+            self.dimensions = dimensions
+        else:
+            raw_dims = os.getenv("GEMINI_EMBEDDING_DIMENSIONS", "3072")
+            try:
+                self.dimensions = int(raw_dims) if raw_dims else 3072
+            except ValueError:
+                self.dimensions = 3072
 
         self.url = (
             f"https://generativelanguage.googleapis.com/"
@@ -49,7 +63,7 @@ class EmbeddingModel:
         requests_data = []
 
         for text in texts:
-            requests_data.append({
+            item = {
                 "model": self.model_resource,
                 "content": {
                     "parts": [
@@ -58,7 +72,10 @@ class EmbeddingModel:
                         }
                     ]
                 }
-            })
+            }
+            if self.dimensions and self.model_name not in ("gemini-embedding-001", "embedding-001"):
+                item["outputDimensionality"] = self.dimensions
+            requests_data.append(item)
 
         payload = {
             "requests": requests_data

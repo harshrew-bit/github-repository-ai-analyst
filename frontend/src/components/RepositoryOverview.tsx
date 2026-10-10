@@ -1,5 +1,8 @@
 import React from 'react';
-import { ExternalLink, Layers, Database, Sparkles, CheckCircle2, RotateCcw, GitBranch } from 'lucide-react';
+import {
+  ExternalLink, Layers, Database, CheckCircle2,
+  RotateCcw, GitBranch, Hash,
+} from 'lucide-react';
 import { IndexResponse } from '../types/api';
 
 interface RepositoryOverviewProps {
@@ -8,92 +11,114 @@ interface RepositoryOverviewProps {
 }
 
 export const RepositoryOverview: React.FC<RepositoryOverviewProps> = ({ data, onReset }) => {
-  const isCached = data.message?.toLowerCase().includes('already indexed') || data.message?.toLowerCase().includes('restored');
+  const isCached =
+    data.message?.toLowerCase().includes('already indexed') ||
+    data.message?.toLowerCase().includes('restored');
+
+  // Parse owner/repo for display
+  const parts = data.repository.split('/');
+  const owner = parts[0] ?? '';
+  const repo  = parts[1] ?? data.repository;
 
   return (
-    <div className="bg-surface-100 border border-surface-border rounded-xl p-4 sm:p-5 shadow-lg shadow-black/20 animate-fade-in space-y-4">
-      {/* Top action row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-border pb-4">
-        {/* Repo title & link */}
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg bg-surface-200 border border-surface-border flex items-center justify-center text-brand-400">
-            <GitBranch className="w-5 h-5" />
+    <div className="card-lifted p-4 sm:p-5 animate-fade-up space-y-4">
+
+      {/* ── Top row: identity + actions */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+
+        {/* Repository identity */}
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cobalt-50 border border-cobalt-200 flex items-center justify-center flex-shrink-0">
+            <GitBranch className="w-5 h-5 text-cobalt-500" aria-hidden="true" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-semibold text-white tracking-tight font-mono">
-                {data.repository}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-semibold text-ink">
+                <span className="text-ink-tertiary font-normal">{owner} /</span>{' '}
+                {repo}
               </h2>
               <a
                 href={`https://github.com/${data.repository}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-slate-400 hover:text-brand-400 transition-colors"
-                title="View on GitHub"
+                className="text-ink-tertiary hover:text-cobalt-500 transition-colors"
+                aria-label={`Open ${data.repository} on GitHub`}
               >
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
               </a>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Active vector index target &bull; Ready for grounded querying
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full border ${
+                  isCached
+                    ? 'bg-warning-light text-warning-text border-warning/20'
+                    : 'bg-success-light text-success-text border-success/20'
+                }`}
+              >
+                <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+                {isCached ? 'Restored from cache' : 'Indexed & ready'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Status badges & reset action */}
-        <div className="flex items-center space-x-2.5">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{isCached ? 'Index Active (Cached)' : 'Indexed & Ready'}</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={onReset}
-            className="flex items-center space-x-1 text-xs text-slate-400 hover:text-white bg-surface-200 hover:bg-surface-300 border border-surface-border px-2.5 py-1 rounded-md transition-colors"
-            title="Switch to analyze another repository"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span className="hidden sm:inline">Change</span>
-          </button>
-        </div>
+        {/* Change repo button */}
+        <button
+          type="button"
+          onClick={onReset}
+          className="btn-ghost text-xs self-start sm:self-auto"
+          aria-label="Analyze a different repository"
+        >
+          <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+          Change repository
+        </button>
       </div>
 
-      {/* Telemetry Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+      {/* ── Metrics row */}
+      <div className="section-separator" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+
         {/* Chunks */}
-        <div className="bg-surface-50 p-3 rounded-lg border border-surface-border space-y-1">
-          <span className="text-slate-400 flex items-center font-mono text-[11px]">
-            <Layers className="w-3 h-3 mr-1 text-sky-400" />
-            Indexed Chunks
-          </span>
-          <p className="text-base font-semibold text-white font-mono">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Layers className="w-3 h-3 text-cobalt-400" aria-hidden="true" />
+            <span className="meta-label">Indexed Chunks</span>
+          </div>
+          <p className="text-xl font-semibold text-ink font-mono" aria-label={`${data.chunks.toLocaleString()} indexed chunks`}>
             {data.chunks.toLocaleString()}
           </p>
         </div>
 
+        {/* Vector metric */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Hash className="w-3 h-3 text-cobalt-400" aria-hidden="true" />
+            <span className="meta-label">Vector Metric</span>
+          </div>
+          <p className="text-sm font-mono text-ink-secondary">Cosine · HNSW</p>
+        </div>
+
         {/* Collection */}
-        <div className="bg-surface-50 p-3 rounded-lg border border-surface-border space-y-1 sm:col-span-2">
-          <span className="text-slate-400 flex items-center font-mono text-[11px]">
-            <Database className="w-3 h-3 mr-1 text-amber-400" />
-            ChromaDB Collection
-          </span>
-          <p className="text-xs font-mono text-slate-200 truncate" title={data.collection}>
+        <div className="col-span-2 sm:col-span-1 space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Database className="w-3 h-3 text-cobalt-400" aria-hidden="true" />
+            <span className="meta-label">ChromaDB Collection</span>
+          </div>
+          <p
+            className="text-xs font-mono text-ink-secondary truncate"
+            title={data.collection}
+          >
             {data.collection}
           </p>
         </div>
 
-        {/* Space Metric */}
-        <div className="bg-surface-50 p-3 rounded-lg border border-surface-border space-y-1">
-          <span className="text-slate-400 flex items-center font-mono text-[11px]">
-            <Sparkles className="w-3 h-3 mr-1 text-brand-400" />
-            Vector Metric
-          </span>
-          <p className="text-xs font-mono text-slate-200">
-            Cosine (HNSW)
-          </p>
-        </div>
       </div>
+
+      {/* ── Optional message */}
+      {data.message && (
+        <p className="text-xs text-ink-tertiary pt-1">{data.message}</p>
+      )}
+
     </div>
   );
 };
