@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import { Copy, Check, ShieldCheck, Terminal } from 'lucide-react';
 
 interface AnswerPanelProps {
@@ -9,27 +10,40 @@ interface AnswerPanelProps {
   sourcesCount: number;
 }
 
-interface CodeBlockProps {
-  inline?: boolean;
-  className?: string;
-  children?: React.ReactNode;
-}
-
 // ─── Technical Code Surface with Copy ─────────────────────────────────────────
-const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, children, ...props }) => {
+//
+// react-markdown v9 changed the code component API: the `inline` prop was
+// removed. The reliable way to distinguish inline `code` from a fenced code
+// block is to check whether the element has a `language-*` class AND whether
+// its content spans multiple lines.
+//
+// Fenced code blocks:  ```python\n...\n```  → className="language-python"
+// Inline backticks:    `pandas`             → className is undefined/empty
+//
+// We render inline code as a small <code> tag and fenced blocks as the full
+// dark editor surface with a copy button.
+
+const CodeBlock: Components['code'] = ({ className, children, node, ...props }) => {
   const [copied, setCopied] = useState(false);
+
+  // A fenced code block always has a language class OR contains a newline.
+  // Inline code has neither.
   const match = /language-(\w+)/.exec(className ?? '');
   const language = match ? match[1] : '';
-  const codeContent = String(children).replace(/\n$/, '');
+  const codeText = String(children);
+
+  // Detect inline: no language class AND content doesn't contain a newline.
+  // This matches react-markdown v9's rendering semantics precisely.
+  const isInline = !match && !codeText.includes('\n');
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(codeContent);
+    navigator.clipboard.writeText(codeText.replace(/\n$/, ''));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (inline) {
+  if (isInline) {
     return (
       <code
         className="px-1.5 py-0.5 rounded-md bg-stone-100 border border-stone-200 text-cobalt-700 font-mono text-xs"
@@ -66,7 +80,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, children, ...p
 
       {/* Editor Content Area */}
       <pre className="p-4 overflow-x-auto text-xs leading-relaxed font-mono text-stone-200" style={{ tabSize: 2 }}>
-        <code>{children}</code>
+        <code className={className}>{children}</code>
       </pre>
     </div>
   );
@@ -130,7 +144,7 @@ export const AnswerPanel: React.FC<AnswerPanelProps> = ({
       <div className="answer-prose text-ink-secondary">
         <ReactMarkdown
           components={{
-            code: CodeBlock as React.ComponentType<{inline?: boolean; className?: string; children?: React.ReactNode}>
+            code: CodeBlock,
           }}
         >
           {answer}
