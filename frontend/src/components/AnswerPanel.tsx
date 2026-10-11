@@ -144,6 +144,7 @@ export const AnswerPanel: React.FC<AnswerPanelProps> = ({
       <div className="answer-prose text-ink-secondary">
         <ReactMarkdown
           components={{
+            pre: ({ children }) => <>{children}</>,
             code: CodeBlock,
           }}
         >

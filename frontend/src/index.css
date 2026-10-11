@@ -204,6 +204,9 @@
   @apply px-1.5 py-0.5 rounded-md bg-stone-100 border border-stone-200
          text-cobalt-700 font-mono text-xs;
 }
+.answer-prose pre code {
+  @apply p-0 bg-transparent border-0 text-inherit;
+}
 .answer-prose table {
   @apply w-full border-collapse text-xs my-4;
 }
